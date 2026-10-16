@@ -90,8 +90,9 @@ function vPin(){
   <div class="pin-pts">${pts}</div><div class="msg casi">${esc(S.pinMsg)}</div>
   ${teclado(false)}`;
 }
-function teclado(conListo){
+function teclado(conListo,punto){
   const k=n=>`<button data-k="${n}">${n}</button>`;
+  if(punto)return `<div class="teclado" id="teclado">${[1,2,3,4,5,6,7,8,9].map(k).join('')}<button data-k="." aria-label="Punto decimal">.</button>${k(0)}<button class="bor" data-k="del" aria-label="Borrar">⌫</button><button class="listo ancho" data-k="ok" aria-label="Listo">✓ Listo</button></div>`;
   return `<div class="teclado" id="teclado">${[1,2,3,4,5,6,7,8,9].map(k).join('')}<button class="bor" data-k="del" aria-label="Borrar">⌫</button>${k(0)}${conListo?`<button class="listo" data-k="ok" aria-label="Listo">✓</button>`:'<span></span>'}</div>`;
 }
 function totalMate(){const ms=window.MODULOS;let h=0,t=0;ms.forEach(m=>{const r=resumenMod(m);h+=r.h;t+=r.tot;});return {h,t};}
@@ -120,15 +121,19 @@ function vEspanol(){
   <div class="tablas">${orto.map(tileEsp).join('')}</div>
   <h2>Programa P.E.P.E.</h2>${rondas}`;
 }
+function tarjetaMod(m){const r=resumenMod(m);return `<button class="mod" data-m="${m.id}"><div class="ic">${m.icono}</div><div class="ti">${m.titulo}</div><div class="pr">${r.h} de ${r.tot} niveles</div><div class="prog"><i style="width:${r.h/r.tot*100}%"></i></div></button>`;}
 function vHome(){
   const tablas=window.MODULOS.filter(m=>m.grupo==='tablas');
   const ops=window.MODULOS.filter(m=>m.grupo==='operaciones');
+  const decs=window.MODULOS.filter(m=>m.grupo==='decimales');
   return `${top(`<button class="btn sec chico" id="materias">← Materias</button>`)}
   <h1>Matemáticas</h1><p class="sub-h">¿Qué practicamos hoy?</p>
   <h2>Tablas de multiplicar</h2>
   <div class="tablas">${tablas.map(m=>{const r=resumenMod(m);return `<button class="tb ${r.h===r.tot?'hecho':''}" data-m="${m.id}"><div class="n">${m.corto}</div><div class="st">${'★'.repeat(Math.round(r.e/m.niveles.length))||'&nbsp;'}</div></button>`;}).join('')}</div>
   <h2>Operaciones</h2>
-  <div class="grid g-mod">${ops.map(m=>{const r=resumenMod(m);return `<button class="mod" data-m="${m.id}"><div class="ic">${m.icono}</div><div class="ti">${m.titulo}</div><div class="pr">${r.h} de ${r.tot} niveles</div><div class="prog"><i style="width:${r.h/r.tot*100}%"></i></div></button>`;}).join('')}</div>`;
+  <div class="grid g-mod">${ops.map(tarjetaMod).join('')}</div>
+  <h2>Decimales</h2>
+  <div class="grid g-mod">${decs.map(tarjetaMod).join('')}</div>`;
 }
 function recuerdaEsp(m){
   if(m.grupo==='orto')return `<b>Recuerda las reglas:</b><ul class="reglas">${m.reglas.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
@@ -163,7 +168,7 @@ function vJuego(){
   let msg='';
   if(j.estado==='bien')msg=`<div class="msg bien pop">¡Muy bien! 🎉</div>`;
   else if(j.estado==='casi')msg=`<div class="msg casi pop">Casi… mira la pista y prueba otra vez 💪</div>`;
-  else if(j.estado==='mostrar')msg=`<div class="msg casi pop">La respuesta es <b>${p.resp}</b>. ¡Sigue, tú puedes!</div>`;
+  else if(j.estado==='mostrar')msg=`<div class="msg casi pop">La respuesta es <b>${window.fmtNum(p.resp)}</b>. ¡Sigue, tú puedes!</div>`;
   else msg='<div class="msg">&nbsp;</div>';
   const mostrarPista=j.pista||j.estado==='casi'||j.estado==='mostrar';
   return `${top(`<button class="btn sec chico" id="abandonar">✕ Salir</button>`)}
@@ -174,7 +179,7 @@ function vJuego(){
   ${msg}
   ${mostrarPista?`<div class="pista">💡 ${esc(p.pista)}</div>`:''}
   ${j.estado==='mostrar'?`<div class="fila-acc"><button class="btn" id="sig">Siguiente →</button></div>`
-   :(j.estado==='bien'?'':`${teclado(true)}<div class="fila-acc"><button class="btn sec chico" id="pista">💡 Pista</button></div>`)}`;
+   :(j.estado==='bien'?'':`${teclado(true,j.punto)}<div class="fila-acc"><button class="btn sec chico" id="pista">💡 Pista</button></div>`)}`;
 }
 
 // ---------- Español: juego ----------
@@ -480,7 +485,7 @@ document.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA'].includes((document.activeElement||{}).tagName))return;
   const k=e.key;
   if(S.pantalla==='pin'){if(/^\d$/.test(k))teclaPin(k);else if(k==='Backspace')teclaPin('del');}
-  else if(S.pantalla==='juego'){if(/^\d$/.test(k))teclaJ(k);else if(k==='Backspace')teclaJ('del');else if(k==='Enter'){S.j.estado==='mostrar'?siguiente():teclaJ('ok');}}
+  else if(S.pantalla==='juego'){if(/^\d$/.test(k))teclaJ(k);else if((k==='.'||k===',')&&S.j&&S.j.punto)teclaJ('.');else if(k==='Backspace')teclaJ('del');else if(k==='Enter'){S.j.estado==='mostrar'?siguiente():teclaJ('ok');}}
 });
 
 // ---------- acciones: alumno ----------
@@ -505,26 +510,27 @@ function empezar(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
   if(m.esp){empezarEsp();return;}
   S.noGuardado=false;
-  S.j={preguntas:l.gen(),i:0,intento:1,aciertos:0,detalle:[],respuesta:'',estado:'esperando',pista:false,primera:null};
+  S.j={punto:!!m.punto,preguntas:l.gen(),i:0,intento:1,aciertos:0,detalle:[],respuesta:'',estado:'esperando',pista:false,primera:null};
   S.pantalla='juego';render();
 }
 function teclaJ(k){
   const j=S.j;if(j.estado==='bien'||j.estado==='mostrar')return;
   if(k==='del'){j.respuesta=j.respuesta.slice(0,-1);if(j.estado==='casi')j.estado='casi';render();return;}
   if(k==='ok'){comprobar();return;}
-  if(j.respuesta.length<6)j.respuesta+=k;render();
+  if(k==='.'){if(j.respuesta.includes('.'))return;if(j.respuesta==='')j.respuesta='0';}
+  if(j.respuesta.length<8)j.respuesta+=k;render();
 }
 function comprobar(){
   const j=S.j,p=j.preguntas[j.i];if(j.respuesta==='')return;
-  const ok=Number(j.respuesta)===p.resp;
+  const ok=Math.abs(Number(j.respuesta)-p.resp)<1e-9;
   if(ok){
-    j.detalle.push({q:p.q,c:String(p.resp),d:j.primera??j.respuesta,ok:j.intento===1});
+    j.detalle.push({q:p.q,c:window.fmtNum(p.resp),d:j.primera??j.respuesta,ok:j.intento===1});
     if(j.intento===1)j.aciertos++;
     j.estado='bien';render();setTimeout(siguiente,850);
   }else if(j.intento===1){
     j.primera=j.respuesta;j.intento=2;j.estado='casi';j.respuesta='';render();
   }else{
-    j.detalle.push({q:p.q,c:String(p.resp),d:j.primera,ok:false});
+    j.detalle.push({q:p.q,c:window.fmtNum(p.resp),d:j.primera,ok:false});
     j.estado='mostrar';render();
   }
 }

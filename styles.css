@@ -205,3 +205,6 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 .fb b{color:#fff;background:rgba(255,255,255,.14);padding:1px 8px;border-radius:8px}
 @media (max-width:700px){.opts.c3{grid-template-columns:1fr}.bins{grid-template-columns:1fr}.q-word{font-size:36px}.frase{font-size:24px}}
 .opts,.bins,.chk-list{width:100%}
+
+.teclado .ancho{grid-column:1/-1;min-height:64px;font-size:26px}
+.mod .ic{min-height:40px}

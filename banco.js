@@ -80,7 +80,62 @@ const OPS=[
   {n:3,nombre:'3 cifras ÷ 1 cifra',recuerda:'Divide, multiplica, resta y baja la siguiente cifra.',gen:divGen(3)},
   {n:4,nombre:'4 cifras ÷ 1 cifra',recuerda:'Repite: divide, multiplica, resta y baja. Comprueba multiplicando el resultado por el divisor.',gen:divGen(4)}]},
 ];
+
+// ---------- DECIMALES ----------
+const fmt=n=>String(Math.round(n*1e6)/1e6);
+const dec=(n,d)=>(n/Math.pow(10,d)).toFixed(d);
+const lugar=d=>d===1?'décimos':'centésimos';
+function decSumaGen(nivel){return ()=>unicas(10,()=>{let A,B,g=0;const d=nivel===3?2:1;
+  do{ if(nivel===3){A=R(105,899);B=R(105,899);} else {A=R(11,nivel===1?88:99);B=R(11,nivel===1?88:99);} g++;
+  }while(g<800 && !(nivel===1?!hasCarry(A,B):(nivel===2?(A%10)+(B%10)>=10:true)));
+  const a=dec(A,d),b=dec(B,d),x=A%10,y=B%10;
+  return {vis:{tipo:'col',a,b,op:'+'},q:`${a} + ${b}`,resp:(A+B)/Math.pow(10,d),
+    pista:`Alinea los puntos. Empieza por los ${lugar(d)}: ${x} + ${y} = ${x+y}`+(x+y>=10?` (escribes ${(x+y)%10} y llevas 1).`:'.')+' El punto va en la misma posición.'};});}
+function decRestaGen(nivel){return ()=>unicas(10,()=>{let A,B,g=0;const d=nivel===3?2:1;
+  do{ if(nivel===3){A=R(205,999);B=R(105,A-1);} else {A=R(21,99);B=R(11,A-1);} g++;
+  }while(g<800 && !(A>B && (nivel===1?!hasBorrow(A,B):(nivel===2?(A%10)<(B%10):true))));
+  const a=dec(A,d),b=dec(B,d),x=A%10,y=B%10;
+  return {vis:{tipo:'col',a,b,op:'−'},q:`${a} − ${b}`,resp:(A-B)/Math.pow(10,d),
+    pista:`Alinea los puntos. Empieza por los ${lugar(d)}: `+(x>=y?`${x} − ${y} = ${x-y}.`:`${x} es menor que ${y}: pide prestado. ${x+10} − ${y} = ${x+10-y}.`)+' El punto va en la misma posición.'};});}
+function decNum(maxd){ // número con 0..maxd decimales (sin ceros al final)
+  const d=R(0,9)<2?0:R(1,maxd);
+  if(d===0){const e=R(2,99);return {txt:String(e),ent:e,d:0};}
+  let ent;do{ent=R(1,Math.pow(10,d+1)-1);}while(ent%10===0);
+  return {txt:(ent/Math.pow(10,d)).toFixed(d),ent,d};
+}
+function decMultGen(nivel){return ()=>unicas(10,()=>{
+  const ks=nivel===1?[10]:nivel===2?[100]:[10,100,1000],k=ks[R(0,ks.length-1)],z=String(k).length-1;
+  const v=decNum(nivel===3?3:2);
+  const resp=v.ent*k/Math.pow(10,v.d);
+  return {vis:{tipo:'linea'},q:`${v.txt} × ${k} = ?`,resp,
+    pista:`Por ${k}, el punto decimal se recorre ${z} lugar${z===1?'':'es'} a la derecha. Si faltan lugares, agrega ceros.`};});}
+function decDivGen(nivel){return ()=>unicas(10,()=>{
+  const ks=nivel===1?[10]:nivel===2?[100]:[10,100,1000],k=ks[R(0,ks.length-1)],z=String(k).length-1;
+  let txt,val;
+  if(nivel===3&&R(0,2)===0){const v=decNum(1);txt=v.txt;val=v.ent/Math.pow(10,v.d);}
+  else{let n;do{n=R(2,nivel===1?999:(nivel===2?9999:9999));}while(n%10===0&&R(0,3)>0);txt=String(n);val=n;}
+  return {vis:{tipo:'linea'},q:`${txt} ÷ ${k} = ?`,resp:val/k,
+    pista:`Entre ${k}, el punto decimal se recorre ${z} lugar${z===1?'':'es'} a la izquierda. Si faltan lugares, agrega ceros.`};});}
+const DECS=[
+ {id:'dec-suma',titulo:'Sumas con decimales',icono:'+.',punto:true,niveles:[
+  {n:1,nombre:'Décimos, sin llevar',recuerda:'Pon un número debajo del otro, con los puntos decimales alineados. Suma como si no hubiera punto y baja el punto en la misma posición.',gen:decSumaGen(1)},
+  {n:2,nombre:'Décimos, con llevada',recuerda:'Si los décimos suman 10 o más, escribe la cifra y lleva 1 a las unidades. El punto siempre queda alineado.',gen:decSumaGen(2)},
+  {n:3,nombre:'Centésimos (dinero)',recuerda:'Con dos decimales funciona igual: alinea los puntos y suma de derecha a izquierda. Es como sumar pesos y centavos.',gen:decSumaGen(3)}]},
+ {id:'dec-resta',titulo:'Restas con decimales',icono:'−.',punto:true,niveles:[
+  {n:1,nombre:'Décimos, sin prestar',recuerda:'Alinea los puntos decimales y resta de derecha a izquierda. El punto baja en la misma posición.',gen:decRestaGen(1)},
+  {n:2,nombre:'Décimos, pidiendo prestado',recuerda:'Si arriba hay un número menor, pide prestado a la columna de al lado: se vuelve 10 más.',gen:decRestaGen(2)},
+  {n:3,nombre:'Centésimos (dinero)',recuerda:'Con dos decimales es igual: alinea los puntos y resta. Para comprobar, suma el resultado y el número de abajo.',gen:decRestaGen(3)}]},
+ {id:'dec-por10',titulo:'Multiplicar ×10, ×100, ×1000',icono:'×10',punto:true,niveles:[
+  {n:1,nombre:'Por 10',recuerda:'Al multiplicar por 10, el punto decimal se recorre 1 lugar a la derecha. Ejemplo: 3.4 × 10 = 34.',gen:decMultGen(1)},
+  {n:2,nombre:'Por 100',recuerda:'Por 100, el punto se recorre 2 lugares a la derecha. Si faltan lugares, agrega ceros. Ejemplo: 4.5 × 100 = 450.',gen:decMultGen(2)},
+  {n:3,nombre:'Por 10, 100 y 1000',recuerda:'Cuenta los ceros: por 10 es 1 lugar, por 100 son 2 y por 1000 son 3, siempre a la derecha. Ejemplo: 0.007 × 1000 = 7.',gen:decMultGen(3)}]},
+ {id:'dec-entre10',titulo:'Dividir ÷10, ÷100, ÷1000',icono:'÷10',punto:true,niveles:[
+  {n:1,nombre:'Entre 10',recuerda:'Al dividir entre 10, el punto decimal se recorre 1 lugar a la izquierda. Ejemplo: 34 ÷ 10 = 3.4.',gen:decDivGen(1)},
+  {n:2,nombre:'Entre 100',recuerda:'Entre 100, el punto se recorre 2 lugares a la izquierda. Si faltan lugares, agrega ceros. Ejemplo: 7 ÷ 100 = 0.07.',gen:decDivGen(2)},
+  {n:3,nombre:'Entre 10, 100 y 1000',recuerda:'Cuenta los ceros: entre 10 es 1 lugar, entre 100 son 2 y entre 1000 son 3, siempre a la izquierda. Ejemplo: 45 ÷ 1000 = 0.045.',gen:decDivGen(3)}]},
+];
+DECS.forEach(m=>m.grupo='decimales');
 OPS.forEach(m=>m.grupo='operaciones');
-window.MODULOS=[...TABLAS,...OPS];
-window.R=R;
+window.MODULOS=[...TABLAS,...OPS,...DECS];
+window.R=R;window.fmtNum=fmt;
 })();
