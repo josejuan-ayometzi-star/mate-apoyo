@@ -6,7 +6,15 @@ const $app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const S={pantalla:'cargando',alumnos:[],token:null,nombre:null,prog:{},pin:'',pinAlumno:null,pinMsg:'',
   mod:null,niv:null,j:null,profe:{verpin:false,jwt:null,resumen:[],det:null,errores:[],alumno:null,nuevos:null,msg:''}};
-const mod=id=>window.MODULOS.find(m=>m.id===id);
+// ---------- Español: módulos construidos desde espanol.js ----------
+const ESPD=window.ESP||{ORTO:[],PEPE:[],RONDAS:[],NIVELES:[]};
+const NOMBRES_NIV=['Reconocer','Aplicar','Producir'],DESC_NIV=['Identifico y clasifico','Completo y corrijo','Creo y escribo'];
+const MODULOS_ESP=[];
+ESPD.ORTO.forEach(L=>MODULOS_ESP.push({id:'orto-'+L.id,esp:true,grupo:'orto',titulo:'Ortografía · '+L.nombre,corto:L.letra,reglas:L.reglas,
+  niveles:[1,2,3].filter(n=>(L.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:L.niveles[n]}))}));
+ESPD.PEPE.forEach(F=>MODULOS_ESP.push({id:'pepe-'+F.folio,esp:true,grupo:'pepe',titulo:'Folio '+F.folio+' · '+F.tema,corto:String(F.folio),tema:F.tema,subtitulo:F.subtitulo,ronda:F.ronda,recordatorio:F.recordatorio,
+  niveles:[1,2,3].filter(n=>(F.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:F.niveles[n]}))}));
+const mod=id=>window.MODULOS.concat(MODULOS_ESP).find(m=>m.id===id);
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3200);}
 const store={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 const lget=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
@@ -87,8 +95,9 @@ function teclado(conListo){
   return `<div class="teclado" id="teclado">${[1,2,3,4,5,6,7,8,9].map(k).join('')}<button class="bor" data-k="del" aria-label="Borrar">⌫</button>${k(0)}${conListo?`<button class="listo" data-k="ok" aria-label="Listo">✓</button>`:'<span></span>'}</div>`;
 }
 function totalMate(){const ms=window.MODULOS;let h=0,t=0;ms.forEach(m=>{const r=resumenMod(m);h+=r.h;t+=r.tot;});return {h,t};}
+function totalEsp(){let h=0,t=0;MODULOS_ESP.forEach(m=>{const r=resumenMod(m);h+=r.h;t+=r.tot;});return {h,t};}
 function vMaterias(){
-  const r=totalMate();
+  const r=totalMate(),re=totalEsp();
   return `${top(`<span class="chip-user">${esc(S.nombre)}</span> <button class="btn sec chico" id="salir">Salir</button>`,true)}
   <h1>¡Hola, ${esc(S.nombre)}!</h1><p class="sub-h">¿Qué quieres practicar hoy?</p>
   <div class="materias">
@@ -97,16 +106,19 @@ function vMaterias(){
      <div class="mp"><i style="width:${r.t?r.h/r.t*100:0}%"></i></div><div class="mn">${r.h} de ${r.t} niveles</div></button>
    <button class="materia esp" data-materia="esp"><div class="simb"><span>A</span><span>a</span><span>✎</span></div>
      <div class="mt">Español</div><div class="ms">Ortografía y palabras</div>
-     <div class="mn mpron">Muy pronto</div></button>
+     <div class="mp"><i style="width:${re.t?re.h/re.t*100:0}%"></i></div><div class="mn">${re.h} de ${re.t} niveles</div></button>
   </div>`;
 }
+function tileEsp(m){const r=resumenMod(m);return `<button class="tb ${r.h===r.tot?'hecho':''}" data-m="${m.id}"><div class="n">${esc(m.corto)}</div><div class="st">${'★'.repeat(Math.round(r.e/m.niveles.length))||'&nbsp;'}</div></button>`;}
 function vEspanol(){
+  const orto=MODULOS_ESP.filter(m=>m.grupo==='orto'),pepe=MODULOS_ESP.filter(m=>m.grupo==='pepe');
+  const rondas=(ESPD.RONDAS||[]).map(R=>`<h3 class="ronda">${esc(R.nombre)} · ${esc(R.desc)}</h3>
+   <div class="niveles dos">${pepe.filter(m=>m.ronda===R.n).map(m=>{const r=resumenMod(m);return `<button class="niv ${r.h===r.tot?'hecho':''}" data-m="${m.id}"><div class="num">${esc(m.corto)}</div><div><div class="nm">${esc(m.tema)}</div><div class="sub">${esc(m.subtitulo)} · ${r.h} de ${r.tot} niveles</div></div>${r.h?estrellasHtml(Math.round(r.e/m.niveles.length)):''}</button>`;}).join('')}</div>`).join('');
   return `${top(`<button class="btn sec chico" id="materias">← Materias</button>`)}
-  <h1>Español</h1>
-  <div class="card pronto"><div class="gde">📚✏️</div><h2>¡Muy pronto!</h2>
-  <p>Aquí vas a practicar ortografía y palabras con el Prof. Pepe, igual que en Matemáticas: niveles, pistas y estrellas.</p>
-  <p>Mientras tanto, sigue sumando estrellas en Matemáticas.</p>
-  <div class="fila-acc"><button class="btn" id="amate">Ir a Matemáticas</button></div></div>`;
+  <h1>Español</h1><p class="sub-h">Elige qué practicar hoy.</p>
+  <h2>Ortografía: letras</h2>
+  <div class="tablas">${orto.map(tileEsp).join('')}</div>
+  <h2>Programa P.E.P.E.</h2>${rondas}`;
 }
 function vHome(){
   const tablas=window.MODULOS.filter(m=>m.grupo==='tablas');
@@ -118,19 +130,24 @@ function vHome(){
   <h2>Operaciones</h2>
   <div class="grid g-mod">${ops.map(m=>{const r=resumenMod(m);return `<button class="mod" data-m="${m.id}"><div class="ic">${m.icono}</div><div class="ti">${m.titulo}</div><div class="pr">${r.h} de ${r.tot} niveles</div><div class="prog"><i style="width:${r.h/r.tot*100}%"></i></div></button>`;}).join('')}</div>`;
 }
+function recuerdaEsp(m){
+  if(m.grupo==='orto')return `<b>Recuerda las reglas:</b><ul class="reglas">${m.reglas.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
+  return `<b>Recuerda:</b> ${esc(m.recordatorio)}`;
+}
 function vNiveles(){
   const m=mod(S.mod);
-  return `${top(`<button class="btn sec chico" id="home">← Inicio</button>`)}
-  <h1>${esc(m.titulo)}</h1><p>Pasa cada nivel con ${CFG.UMBRAL} aciertos de ${CFG.TOTAL} para abrir el siguiente.</p>
+  return `${top(`<button class="btn sec chico" id="home">${m.esp?'← Español':'← Inicio'}</button>`)}
+  <h1>${esc(m.titulo)}</h1>${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Completa cada nivel para abrir el siguiente.</p>`:`<p>Pasa cada nivel con ${CFG.UMBRAL} aciertos de ${CFG.TOTAL} para abrir el siguiente.</p>`}
   <div class="niveles">${m.niveles.map(l=>{const p=pr(m.id,l.n);const ab=abierto(m.id,l.n);const h=hecho(m.id,l.n);
-    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${p?`Mejor: ${p.mejor} de ${CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior')}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
+    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${p?`Mejor: ${p.mejor} de ${p.total||CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior')}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
 }
 function vIntro(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
   return `${top(`<button class="btn sec chico" id="volver">← Niveles</button>`)}
   <h1>${esc(m.titulo)} · Nivel ${l.n}</h1><h2 style="margin-top:4px">${esc(l.nombre)}</h2>
-  <div class="recuerda"><b>Recuerda:</b> ${esc(l.recuerda)}</div>
-  <p>Son ${CFG.TOTAL} preguntas. Si fallas, puedes intentarlo otra vez y ver una pista. Para pasar necesitas ${CFG.UMBRAL} bien a la primera. Si no lo logras, practicas de nuevo con números nuevos.</p>
+  ${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Son ${l.preguntas.length} ejercicios. Si te equivocas, verás la respuesta correcta para aprender. ¡Tú puedes!</p>`
+  :`<div class="recuerda"><b>Recuerda:</b> ${esc(l.recuerda)}</div>
+  <p>Son ${CFG.TOTAL} preguntas. Si fallas, puedes intentarlo otra vez y ver una pista. Para pasar necesitas ${CFG.UMBRAL} bien a la primera. Si no lo logras, practicas de nuevo con números nuevos.</p>`}
   <div class="fila-acc"><button class="btn ok" id="empezar">¡Empezar!</button></div>`;
 }
 function vis(p){
@@ -159,17 +176,133 @@ function vJuego(){
   ${j.estado==='mostrar'?`<div class="fila-acc"><button class="btn" id="sig">Siguiente →</button></div>`
    :(j.estado==='bien'?'':`${teclado(true)}<div class="fila-acc"><button class="btn sec chico" id="pista">💡 Pista</button></div>`)}`;
 }
+
+// ---------- Español: juego ----------
+const normE=t=>String(t).toLowerCase().replace(/[.,;:!¡?¿]/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+function descQ(q){
+  if(q.tipo==='choice'||q.tipo==='fill')return ((q.pregunta||'')+' '+(q.palabra&&q.palabra!=='?'?q.palabra:'')).trim();
+  if(q.tipo==='classify')return q.instr+': '+q.fichas.map(f=>f.w).join(', ');
+  if(q.tipo==='correct')return q.instr+': '+q.frase;
+  if(q.tipo==='transform')return q.instr+': '+q.origen;
+  return q.instr||'';
+}
+function corrQ(q){
+  if(q.tipo==='choice'||q.tipo==='fill')return q.opciones[q.correcta];
+  if(q.tipo==='classify')return q.fichas.map(f=>f.w+' → '+q.cajas[f.caja]).join(', ');
+  if(q.tipo==='correct')return q.correcciones.join(' · ');
+  if(q.tipo==='transform')return q.destino;
+  if(q.tipo==='write')return (q.ejemplos&&q.ejemplos[0])||'';
+  return '';
+}
+function prepararQ(){
+  const j=S.je,q=j.qs[j.i];
+  j.fase='resp';j.msg='';j.ok=null;j.sel=[];j.sel1=null;j.colocadas=[];j.fallo=false;j.elegida=null;
+  j.orden=q.tipo==='classify'?q.fichas.map((f,i)=>i).sort(()=>Math.random()-.5):null;
+}
+function empezarEsp(){
+  const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
+  S.noGuardado=false;S.je={qs:l.preguntas,i:0,aciertos:0,detalle:[]};
+  prepararQ();S.pantalla='juegoesp';render();
+}
+function finQ(ok,dado,msg){
+  const j=S.je,q=j.qs[j.i];
+  if(ok)j.aciertos++;
+  j.detalle.push({q:descQ(q),c:corrQ(q),d:String(dado??''),ok});
+  j.fase='fin';j.ok=ok;j.msg=msg;render();
+}
+function vJuegoEsp(){
+  const j=S.je,q=j.qs[j.i],fin=j.fase==='fin';let c='';
+  const instr=t=>`<div class="q-instr">${esc(t)}</div>`;
+  if(q.tipo==='choice'||q.tipo==='fill'){
+    c=instr(q.pregunta||q.instr)+(q.palabra&&q.palabra!=='?'?`<div class="q-word">${esc(q.palabra)}</div>`:'')+
+      `<div class="opts ${q.opciones.length===3?'c3':'c2'}">${q.opciones.map((o,i)=>`<button class="opt ${fin?(i===q.correcta?'ok':(i===j.elegida?'no':'')):''}" data-op="${i}" ${fin?'disabled':''}>${esc(o)}</button>`).join('')}</div>`;
+  }else if(q.tipo==='classify'){
+    c=instr(q.instr.replace(/^Arrastra/,'Lleva'))+`<div class="ayuda">Toca una palabra y luego toca su caja</div>
+      <div class="pool">${j.orden.filter(i=>!j.colocadas.includes(i)).map(i=>`<button class="chip ${j.sel1===i?'sel':''}" data-f="${i}">${esc(q.fichas[i].w)}</button>`).join('')}</div>
+      <div class="bins">${q.cajas.map((cj,b)=>`<button class="bin" data-b="${b}"><h4>${esc(cj)}</h4>${j.colocadas.filter(i=>q.fichas[i].caja===b).map(i=>`<span class="in">${esc(q.fichas[i].w)}</span>`).join('')}</button>`).join('')}</div>`;
+  }else if(q.tipo==='correct'){
+    const errs=new Set(q.errores.map(normE));
+    c=instr(q.instr)+`<div class="ayuda">Toca las palabras que están mal</div><div class="frase">${q.frase.split(' ').map((w,i)=>{
+      let k='';if(fin){const e=errs.has(normE(w)),m=j.sel.includes(i);k=e&&m?'ok':(e?'miss':(m?'no':''));}else if(j.sel.includes(i))k='sel';
+      return `<span class="pal ${k}" data-i="${i}">${esc(w)}</span>`;}).join(' ')}</div>`+(fin?'':`<div class="fila-acc"><button class="btn" id="revisar">Revisar</button></div>`);
+  }else if(q.tipo==='transform'){
+    c=instr(q.instr)+`<div class="q-word">${esc(q.origen)} <small>→ ?</small></div><div class="inp-wrap"><input type="text" id="tIn" placeholder="Escribe aquí…" autocomplete="off" autocapitalize="off" spellcheck="false" ${fin?'disabled':''} value="${esc(j.dado||'')}">
+      ${fin?'':`<div class="ayuda">💡 ${esc(q.pista||'')}</div><div class="fila-acc"><button class="btn" id="revisar">Revisar</button></div>`}</div>`;
+  }else if(q.tipo==='write'){
+    c=instr(q.instr)+`<div class="inp-wrap"><textarea id="wIn" rows="3" placeholder="Escribe tu respuesta…" ${fin?'disabled':''}>${esc(j.dado||'')}</textarea>${fin?'':`<div class="fila-acc"><button class="btn" id="revisar">Listo</button></div>`}</div>`;
+  }else{ // checklist
+    c=instr(q.instr)+`<div class="chk-list">${(q.items||[]).map((it,i)=>`<button class="chk ${j.sel.includes(i)?'on':''}" data-i="${i}" ${fin?'disabled':''}><span class="box">✓</span><span>${esc(it)}</span></button>`).join('')}</div>`+(fin?'':`<div class="fila-acc"><button class="btn" id="revisar">Terminar</button></div>`);
+  }
+  return `${top(`<button class="btn sec chico" id="abandonar">✕ Salir</button>`)}
+  <div class="ver" style="text-align:center">Ejercicio ${j.i+1} de ${j.qs.length}</div>
+  <div class="prog"><i style="width:${j.i/j.qs.length*100}%"></i></div>
+  <div class="q-box esp">${c}</div>
+  <div class="fb ${j.ok===true?'ok':(j.ok===false?'no':'')}">${j.msg||'&nbsp;'}</div>
+  ${fin?`<div class="fila-acc"><button class="btn" id="sigesp">${j.i+1>=j.qs.length?'Terminar ✓':'Siguiente →'}</button></div>`:''}`;
+}
+function bindEsp(){
+  const j=S.je,q=j.qs[j.i];
+  on('#abandonar',()=>{if(confirm('¿Quieres salir? Este intento no se guardará.')){S.pantalla='niveles';render();}});
+  on('#sigesp',()=>{j.i++;if(j.i>=j.qs.length){terminarEsp();return;}prepararQ();render();});
+  if(j.fase==='fin')return;
+  if(q.tipo==='choice'||q.tipo==='fill'){
+    $app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.op);j.elegida=i;const ok=i===q.correcta;
+      finQ(ok,q.opciones[i],ok?'¡Muy bien! 🎉':'Casi… la respuesta correcta está en verde 💪');});
+  }else if(q.tipo==='classify'){
+    $app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{j.sel1=j.sel1===Number(b.dataset.f)?null:Number(b.dataset.f);j.msg='';render();});
+    $app.querySelectorAll('.bin').forEach(b=>b.onclick=()=>{
+      if(j.sel1===null){j.msg='Primero toca una palabra';j.ok=null;render();return;}
+      if(q.fichas[j.sel1].caja===Number(b.dataset.b)){
+        j.colocadas.push(j.sel1);j.sel1=null;j.ok=null;
+        if(j.colocadas.length===q.fichas.length){finQ(!j.fallo,j.fallo?'con errores':'bien',j.fallo?'¡Terminaste de clasificar! 🎉':'¡Clasificaste todas! 🎉');}
+        else{j.msg='¡Bien!';render();}
+      }else{j.fallo=true;j.msg='Esa va en la otra caja, inténtalo otra vez';j.ok=null;j.sel1=null;render();}
+    });
+  }else if(q.tipo==='correct'){
+    $app.querySelectorAll('.pal').forEach(el=>el.onclick=()=>{const i=Number(el.dataset.i);j.sel=j.sel.includes(i)?j.sel.filter(x=>x!==i):[...j.sel,i];render();});
+    on('#revisar',()=>{
+      const errs=new Set(q.errores.map(normE)),pals=q.frase.split(' ');
+      let ok=0,mal=0;pals.forEach((w,i)=>{const e=errs.has(normE(w)),m=j.sel.includes(i);if(e&&m)ok++;else if(!e&&m)mal++;});
+      const todo=ok===q.errores.length&&mal===0;
+      finQ(todo,pals.filter((w,i)=>j.sel.includes(i)).join(' '),todo?`¡Perfecto! 🎉 Se escribe: <b>${esc(q.correcciones.join(' · '))}</b>`:`Encontraste ${ok} de ${q.errores.length}. Lo correcto es: <b>${esc(q.correcciones.join(' · '))}</b>`);});
+  }else if(q.tipo==='transform'){
+    const go=()=>{const v=$app.querySelector('#tIn').value.trim();if(!v)return;j.dado=v;const ok=normE(v)===normE(q.destino);
+      finQ(ok,v,ok?`¡Muy bien! 🎉 Se escribe: <b>${esc(q.destino)}</b>`:`Casi… la respuesta es: <b>${esc(q.destino)}</b>`);};
+    on('#revisar',go);const t=$app.querySelector('#tIn');if(t)t.onkeydown=e=>{if(e.key==='Enter')go();};
+  }else if(q.tipo==='write'){
+    on('#revisar',()=>{const v=$app.querySelector('#wIn').value.trim();
+      if(v.length<3){j.msg='Escribe un poco más';j.ok=null;render();return;}
+      j.dado=v;const ok=q.validar?normE(v).includes(normE(q.validar)):true;const ej=q.ejemplos&&q.ejemplos.length?` Ejemplo: <b>${esc(q.ejemplos[0])}</b>`:'';
+      finQ(ok,v,ok?`¡Muy bien! 🎉${ej}`:`Buen intento. Recuerda incluir «${esc(q.validar)}».${ej}`);});
+  }else{
+    $app.querySelectorAll('.chk').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i);j.sel=j.sel.includes(i)?j.sel.filter(x=>x!==i):[...j.sel,i];render();});
+    on('#revisar',()=>finQ(true,String(j.sel.length),'¡Bien revisado! Revisar tu trabajo te hace mejor escritor.'));
+  }
+}
+async function terminarEsp(){
+  const j=S.je,total=j.qs.length,pct=total?j.aciertos/total:0,est=pct>=.9?3:(pct>=.6?2:1);
+  S.j={esp:true,aciertos:j.aciertos,total,detalle:j.detalle,est};
+  const k=key(S.mod,S.niv),a=S.prog[k]||{modulo:S.mod,nivel:S.niv,completado:false,estrellas:0,mejor:0,intentos:0};
+  S.prog[k]={...a,completado:true,estrellas:Math.max(a.estrellas,est),mejor:Math.max(a.mejor,j.aciertos),intentos:a.intentos+1,total};
+  const args={p_modulo:S.mod,p_nivel:S.niv,p_aciertos:j.aciertos,p_total:total,p_detalle:j.detalle};
+  S.pantalla='resultado';render();
+  try{await rpc('guardar_intento',{p_token:S.token,...args});}
+  catch(e){
+    if(/sesion_invalida/.test(e.message)){sesionCaida();return;}
+    const p=pend();p.push({a:args});lset('mate_pend',JSON.stringify(p));S.noGuardado=true;render();
+  }
+}
 function vResultado(){
-  const j=S.j,m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);const pasa=j.aciertos>=CFG.UMBRAL;
-  const est=!pasa?0:(j.aciertos>=10?3:(j.aciertos===9?2:1));
+  const j=S.j,m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);const esp=!!j.esp;const pasa=esp?true:j.aciertos>=CFG.UMBRAL;
+  const est=esp?j.est:(!pasa?0:(j.aciertos>=10?3:(j.aciertos===9?2:1)));
   const fallos=j.detalle.filter(d=>!d.ok);
   const haySig=m.niveles.some(x=>x.n===S.niv+1);
   return `${top('')}
   <div class="res-gde">${pasa?'🎉':'💪'}</div>
-  <h1 style="text-align:center">${pasa?'¡Lo lograste!':'¡Casi lo logras!'}</h1>
-  <p style="text-align:center;font-size:22px">${j.aciertos} de ${CFG.TOTAL} bien a la primera</p>
+  <h1 style="text-align:center">${esp?(est===3?'¡Excelente!':est===2?'¡Bien hecho!':'¡Terminaste!'):(pasa?'¡Lo lograste!':'¡Casi lo logras!')}</h1>
+  <p style="text-align:center;font-size:22px">${j.aciertos} de ${esp?j.total:CFG.TOTAL} bien${esp?'':' a la primera'}</p>
   ${pasa?`<div class="res-est">${'★'.repeat(est)}${'☆'.repeat(3-est)}</div>`:`<p style="text-align:center">Con otra práctica lo logras. Los números van a cambiar.</p>`}
-  ${fallos.length?`<h2>Para repasar</h2>${fallos.map(f=>`<div class="fall">${esc(f.q.replace('?',f.c).replace('□',f.c))}${/[+−×÷]/.test(f.q)&&!/[=]/.test(f.q)?' = '+esc(f.c):''}</div>`).join('')}`:''}
+  ${fallos.length?`<h2>Para repasar</h2>${fallos.map(f=>esp?`<div class="fall">${esc(f.q)}<br><b>Respuesta: ${esc(f.c||'—')}</b></div>`:`<div class="fall">${esc(f.q.replace('?',f.c).replace('□',f.c))}${/[+−×÷]/.test(f.q)&&!/[=]/.test(f.q)?' = '+esc(f.c):''}</div>`).join('')}`:''}
   <div class="fila-acc" style="margin-top:16px">
    ${pasa&&haySig?`<button class="btn ok" id="siguiente">Siguiente nivel →</button>`:''}
    <button class="btn ${pasa?'sec':'nar'}" id="otra">${pasa?'Practicar otra vez':'Intentar con números nuevos'}</button>
@@ -224,7 +357,7 @@ function vProfeDetalle(){
   return `${top(`<button class="btn sec chico" id="volverp">← Grupo</button>`)}<h1>${esc(a.nombre)}</h1>
   <h2>Niveles</h2>
   <table class="t"><thead><tr><th>Tema</th><th>Nivel</th><th>Estado</th><th>Mejor</th><th>★</th><th>Intentos</th></tr></thead><tbody>
-  ${P.det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':'<span class="etq gris">En práctica</span>'}</td><td>${d.mejor}/${CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
+  ${P.det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':'<span class="etq gris">En práctica</span>'}</td><td>${d.mejor}/${d.total||CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
   </tbody></table>${P.det.length?'':'<p>Todavía no ha practicado.</p>'}
   <h2>Errores más frecuentes</h2>
   ${P.errores.length?`<table class="t"><thead><tr><th>Tema</th><th>Pregunta</th><th>Veces</th><th>Contestó</th><th>Correcta</th></tr></thead><tbody>${P.errores.map(e=>{const m=mod(e.modulo);return `<tr><td>${esc(m?m.titulo:e.modulo)}</td><td>${esc(e.pregunta)}</td><td>${e.veces}</td><td>${esc(e.ultima_respuesta??'')}</td><td>${esc(e.correcta)}</td></tr>`;}).join('')}</tbody></table>`:'<p>Sin errores registrados.</p>'}
@@ -242,8 +375,8 @@ function vProfeDetalle(){
 // ---------- render + eventos ----------
 function render(){
   const p=S.pantalla;
-  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
-  $app.innerHTML=v()+(p==='juego'?'':pie());bind();
+  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
+  $app.innerHTML=v()+((p==='juego'||p==='juegoesp')?'':pie());bind();
 }
 const on=(sel,fn)=>{const e=$app.querySelector(sel);if(e)e.addEventListener('click',fn);return e;};
 function bind(){
@@ -263,20 +396,21 @@ function bind(){
   }
   if(p==='espanol'){
     on('#materias',()=>{S.pantalla='materias';render();});
-    on('#amate',()=>{S.pantalla='home';render();});
+    $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
   if(p==='home'){
     on('#materias',()=>{S.pantalla='materias';render();});
     $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
   if(p==='niveles'){
-    on('#home',()=>{S.pantalla='home';render();});
+    on('#home',()=>{S.pantalla=mod(S.mod).esp?'espanol':'home';render();});
     $app.querySelectorAll('.niv:not(.cerrado)').forEach(b=>b.onclick=()=>{S.niv=Number(b.dataset.n);S.pantalla='intro';render();});
   }
   if(p==='intro'){
     on('#volver',()=>{S.pantalla='niveles';render();});
     on('#empezar',empezar);
   }
+  if(p==='juegoesp')bindEsp();
   if(p==='juego'){
     on('#abandonar',()=>{if(confirm('¿Quieres salir? Este intento no se guardará.')){S.pantalla='niveles';render();}});
     $app.querySelectorAll('#teclado button').forEach(b=>b.onclick=()=>teclaJ(b.dataset.k));
@@ -369,6 +503,7 @@ async function teclaPin(k){
 }
 function empezar(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
+  if(m.esp){empezarEsp();return;}
   S.noGuardado=false;
   S.j={preguntas:l.gen(),i:0,intento:1,aciertos:0,detalle:[],respuesta:'',estado:'esperando',pista:false,primera:null};
   S.pantalla='juego';render();
