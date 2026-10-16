@@ -61,15 +61,19 @@ function salir(){
 function sesionCaida(){toast('Tu sesión terminó. Entra otra vez.');S.token=null;store.del('mate_token');S.pantalla='login';render();cargarNombres();}
 
 // ---------- vistas: alumno ----------
-function top(extra=''){return `<div class="top"><div class="ver">${esc(CFG.VERSION)}</div>${extra}</div>`;}
+function top(extra='',hero=false){
+  if(hero)return `<img class="hero" src="img/banner.jpg" alt="Prof. Pepe"><div class="top top-der">${extra}</div>`;
+  return `<div class="top"><div class="marca"><img class="av" src="img/pepe.png" alt=""><img class="rot" src="img/pepe-texto.png" alt="Prof. Pepe"></div><div class="extra">${extra}</div></div>`;
+}
+function pie(){return `<div class="pie"><div class="logos"><img src="img/logo-crecer.png" alt="Centro Educativo Crecer"><img src="img/logo-ib.png" alt="IB World School"></div><div>Mate Apoyo · ${esc(CFG.VERSION)}</div></div>`;}
 function vCargando(){return `${top()}<div class="card"><p>Cargando…</p></div>`;}
 function vLogin(){
   const l=S.alumnos;
-  return `${top()}<h1>¡Hola! 👋</h1><p>Toca tu nombre para entrar.</p>
+  return `${top('',true)}<h1>¡Hola! 👋</h1><p>Toca tu nombre para entrar.</p>
   ${S.errRed?`<div class="card"><p>No hay internet por ahora. Revisa tu conexión y toca el botón.</p><button class="btn" id="reint">Reintentar</button></div>`:''}
   <div class="grid g-nombres" id="nombres">${l.map(a=>`<button class="nombre" data-id="${esc(a.id)}" data-n="${esc(a.nombre)}">${esc(a.nombre)}</button>`).join('')}</div>
   ${(!l.length&&!S.errRed)?'<p>Todavía no hay alumnos registrados. Pide a tu profe que los agregue.</p>':''}
-  <div class="pie"><button class="enlace" id="irprofe">Soy el profe</button></div>`;
+  <div class="acc-profe"><button class="enlace" id="irprofe">Soy el profe</button></div>`;
 }
 function vPin(){
   const pts=[0,1,2,3].map(i=>`<i class="${i<S.pin.length?'on':''}"></i>`).join('');
@@ -82,11 +86,33 @@ function teclado(conListo){
   const k=n=>`<button data-k="${n}">${n}</button>`;
   return `<div class="teclado" id="teclado">${[1,2,3,4,5,6,7,8,9].map(k).join('')}<button class="bor" data-k="del" aria-label="Borrar">⌫</button>${k(0)}${conListo?`<button class="listo" data-k="ok" aria-label="Listo">✓</button>`:'<span></span>'}</div>`;
 }
+function totalMate(){const ms=window.MODULOS;let h=0,t=0;ms.forEach(m=>{const r=resumenMod(m);h+=r.h;t+=r.tot;});return {h,t};}
+function vMaterias(){
+  const r=totalMate();
+  return `${top(`<span class="chip-user">${esc(S.nombre)}</span> <button class="btn sec chico" id="salir">Salir</button>`,true)}
+  <h1>¡Hola, ${esc(S.nombre)}!</h1><p class="sub-h">¿Qué quieres practicar hoy?</p>
+  <div class="materias">
+   <button class="materia mate" data-materia="mate"><div class="simb"><span>+</span><span>−</span><span>×</span><span>÷</span></div>
+     <div class="mt">Matemáticas</div><div class="ms">Tablas y operaciones</div>
+     <div class="mp"><i style="width:${r.t?r.h/r.t*100:0}%"></i></div><div class="mn">${r.h} de ${r.t} niveles</div></button>
+   <button class="materia esp" data-materia="esp"><div class="simb"><span>A</span><span>a</span><span>✎</span></div>
+     <div class="mt">Español</div><div class="ms">Ortografía y palabras</div>
+     <div class="mn mpron">Muy pronto</div></button>
+  </div>`;
+}
+function vEspanol(){
+  return `${top(`<button class="btn sec chico" id="materias">← Materias</button>`)}
+  <h1>Español</h1>
+  <div class="card pronto"><div class="gde">📚✏️</div><h2>¡Muy pronto!</h2>
+  <p>Aquí vas a practicar ortografía y palabras con el Prof. Pepe, igual que en Matemáticas: niveles, pistas y estrellas.</p>
+  <p>Mientras tanto, sigue sumando estrellas en Matemáticas.</p>
+  <div class="fila-acc"><button class="btn" id="amate">Ir a Matemáticas</button></div></div>`;
+}
 function vHome(){
   const tablas=window.MODULOS.filter(m=>m.grupo==='tablas');
   const ops=window.MODULOS.filter(m=>m.grupo==='operaciones');
-  return `${top(`<div><span class="chip-user">${esc(S.nombre)}</span> <button class="btn sec chico" id="salir">Salir</button></div>`)}
-  <h1>¿Qué practicamos hoy?</h1>
+  return `${top(`<button class="btn sec chico" id="materias">← Materias</button>`)}
+  <h1>Matemáticas</h1><p class="sub-h">¿Qué practicamos hoy?</p>
   <h2>Tablas de multiplicar</h2>
   <div class="tablas">${tablas.map(m=>{const r=resumenMod(m);return `<button class="tb ${r.h===r.tot?'hecho':''}" data-m="${m.id}"><div class="n">${m.corto}</div><div class="st">${'★'.repeat(Math.round(r.e/m.niveles.length))||'&nbsp;'}</div></button>`;}).join('')}</div>
   <h2>Operaciones</h2>
@@ -203,8 +229,8 @@ function vProfeDetalle(){
 // ---------- render + eventos ----------
 function render(){
   const p=S.pantalla;
-  const v={cargando:vCargando,login:vLogin,pin:vPin,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
-  $app.innerHTML=v();bind();
+  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
+  $app.innerHTML=v()+(p==='juego'?'':pie());bind();
 }
 const on=(sel,fn)=>{const e=$app.querySelector(sel);if(e)e.addEventListener('click',fn);return e;};
 function bind(){
@@ -218,8 +244,16 @@ function bind(){
     on('#atras',()=>{S.pantalla='login';render();});
     $app.querySelectorAll('#teclado button').forEach(b=>b.onclick=()=>teclaPin(b.dataset.k));
   }
-  if(p==='home'){
+  if(p==='materias'){
     on('#salir',salir);
+    $app.querySelectorAll('[data-materia]').forEach(b=>b.onclick=()=>{S.pantalla=b.dataset.materia==='mate'?'home':'espanol';render();});
+  }
+  if(p==='espanol'){
+    on('#materias',()=>{S.pantalla='materias';render();});
+    on('#amate',()=>{S.pantalla='home';render();});
+  }
+  if(p==='home'){
+    on('#materias',()=>{S.pantalla='materias';render();});
     $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
   if(p==='niveles'){
@@ -289,7 +323,7 @@ async function teclaPin(k){
     try{
       const r=await rpc('login_alumno',{p_id:S.pinAlumno,p_pin:S.pin});
       if(r.ok){S.token=r.token;S.nombre=r.nombre;store.set('mate_token',r.token);store.set('mate_nombre',r.nombre);
-        await flushPend();await cargarProg();S.pantalla='home';render();}
+        await flushPend();await cargarProg();S.pantalla='materias';render();}
       else{S.pin='';S.pinMsg=r.error==='bloqueado'?'Espera 5 minutos o pide ayuda a tu profe.':'Ese PIN no es. Intenta otra vez.';render();}
     }catch(e){S.pin='';S.pinMsg=e.red?'No hay internet.':'Algo falló. Intenta otra vez.';render();}
   }
@@ -372,7 +406,7 @@ async function rutear(){
   const t=store.get('mate_token');
   if(t){
     S.token=t;S.nombre=store.get('mate_nombre')||'';
-    try{await cargarProg();S.pantalla='home';render();return;}catch(e){S.token=null;store.del('mate_token');}
+    try{await cargarProg();S.pantalla='materias';render();return;}catch(e){S.token=null;store.del('mate_token');}
   }
   S.pantalla='cargando';render();cargarNombres();
 }
