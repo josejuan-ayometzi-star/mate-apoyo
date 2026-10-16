@@ -5,7 +5,7 @@
 const $app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const S={pantalla:'cargando',alumnos:[],token:null,nombre:null,prog:{},pin:'',pinAlumno:null,pinMsg:'',
-  mod:null,niv:null,j:null,profe:{jwt:null,resumen:[],det:null,errores:[],alumno:null,nuevos:null,msg:''}};
+  mod:null,niv:null,j:null,profe:{verpin:false,jwt:null,resumen:[],det:null,errores:[],alumno:null,nuevos:null,msg:''}};
 const mod=id=>window.MODULOS.find(m=>m.id===id);
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3200);}
 const store={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
@@ -194,20 +194,26 @@ function vProfeLogin(){
   <div class="msg casi">${esc(S.profe.msg)}</div><button class="btn" id="entrarp">Entrar</button></div>`;
 }
 function vProfePanel(){
-  const P=S.profe,r=P.resumen;
+  const P=S.profe,all=P.resumen,r=all.filter(a=>a.activo!==false),bajas=all.filter(a=>a.activo===false);
+  const sinpin=r.filter(a=>!a.pin).length;
   return `${top(`<button class="btn sec chico" id="salirp">Salir</button>`)}<h1>Avance del grupo</h1>
-  <div class="fila-acc" style="justify-content:flex-start;margin-bottom:12px">
-   <button class="btn chico" id="nuevos">+ Agregar alumnos</button><button class="btn sec chico" id="act">↻ Actualizar</button></div>
+  <div class="fila-acc solo-pantalla" style="justify-content:flex-start;margin-bottom:12px">
+   <button class="btn chico" id="nuevos">+ Agregar alumnos</button><button class="btn sec chico" id="act">↻ Actualizar</button>
+   <button class="btn sec chico" id="verpin">${P.verpin?'🙈 Ocultar PINes':'👁 Mostrar PINes'}</button>
+   <button class="btn sec chico" id="listapin">🖨 Lista de PINes</button></div>
+  ${sinpin?`<div class="card solo-pantalla" style="margin-bottom:12px"><p><b>${sinpin} alumno${sinpin===1?'':'s'} sin PIN visible</b> (se crearon antes de esta versión). Abre cada alumno y escribe su PIN actual para guardarlo, o genera PINes nuevos para ${sinpin===1?'ese alumno':'todos ellos'}.</p>
+   <button class="btn nar chico" id="pinfalt">Generar PINes nuevos</button></div>`:''}
   ${P.nuevos?vNuevos():''}
-  <table class="t"><thead><tr><th>Alumno</th><th>Niveles ✓</th><th>★</th><th>Intentos</th><th>Última vez</th><th>Estado</th></tr></thead><tbody>
-  ${r.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td><b>${esc(a.nombre)}</b></td><td>${a.niveles_completados}</td><td>${a.estrellas}</td><td>${a.intentos}</td><td>${ago(a.ultima_actividad)}</td><td>${etiqueta(a)}</td></tr>`).join('')}
-  </tbody></table>${r.length?'':'<p>Aún no hay alumnos. Usa "Agregar alumnos".</p>'}`;
+  <table class="t solo-pantalla"><thead><tr><th>Alumno</th>${P.verpin?'<th>PIN</th>':''}<th>Niveles ✓</th><th>★</th><th>Intentos</th><th>Última vez</th><th>Estado</th></tr></thead><tbody>
+  ${r.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td><b>${esc(a.nombre)}</b></td>${P.verpin?`<td><b>${esc(a.pin||'—')}</b></td>`:''}<td>${a.niveles_completados}</td><td>${a.estrellas}</td><td>${a.intentos}</td><td>${ago(a.ultima_actividad)}</td><td>${etiqueta(a)}</td></tr>`).join('')}
+  </tbody></table>${r.length?'':'<p>Aún no hay alumnos. Usa "Agregar alumnos".</p>'}
+  ${bajas.length?`<h2 class="solo-pantalla">Dados de baja</h2><table class="t solo-pantalla"><tbody>${bajas.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td>${esc(a.nombre)}</td><td>${a.niveles_completados} niveles ✓</td><td><span class="etq gris">Baja</span></td></tr>`).join('')}</tbody></table>`:''}`;
 }
 function vNuevos(){
   const n=S.profe.nuevos;
-  if(n.resultado){return `<div class="card" style="margin-bottom:14px"><h2 style="margin-top:0">PINes asignados</h2><p>Anótalos o imprímelos ahora: después ya no se pueden ver (solo cambiarlos).</p>
-   <table class="t"><thead><tr><th>Alumno</th><th>PIN</th><th>Estado</th></tr></thead><tbody>${n.resultado.map(x=>`<tr><td>${esc(x.nombre)}</td><td><b>${esc(x.pin)}</b></td><td>${x.ok?'<span class="etq ok">Creado</span>':'<span class="etq alerta">'+esc(x.err)+'</span>'}</td></tr>`).join('')}</tbody></table>
-   <div class="fila-acc" style="justify-content:flex-start;margin-top:10px"><button class="btn sec chico" id="cerrarn">Cerrar</button><button class="btn chico" id="imprimir">Imprimir</button></div></div>`;}
+  if(n.resultado){return `<div class="card" style="margin-bottom:14px"><h2 style="margin-top:0">${n.lista?'Lista de PINes':'PINes asignados'}</h2><p class="solo-pantalla">${n.lista?'Imprime esta lista y recórtala para entregar cada PIN.':'Quedan guardados: puedes verlos cuando quieras con "Mostrar PINes".'}</p>
+   <table class="t"><thead><tr><th>Alumno</th><th>PIN</th>${n.lista?'':'<th>Estado</th>'}</tr></thead><tbody>${n.resultado.map(x=>`<tr><td>${esc(x.nombre)}</td><td><b>${esc(x.pin)}</b></td>${n.lista?'':`<td>${x.ok?'<span class="etq ok">Creado</span>':'<span class="etq alerta">'+esc(x.err)+'</span>'}</td>`}</tr>`).join('')}</tbody></table>
+   <div class="fila-acc solo-pantalla" style="justify-content:flex-start;margin-top:10px"><button class="btn sec chico" id="cerrarn">Cerrar</button><button class="btn chico" id="imprimir">Imprimir</button></div></div>`;}
   return `<div class="card" style="margin-bottom:14px"><h2 style="margin-top:0">Agregar alumnos</h2>
   <p>Escribe uno por renglón. Solo el nombre (y la inicial del apellido si se repite), por ejemplo <b>Ana M.</b>. Si no pones PIN, se asigna uno de 4 números. También puedes escribir <b>Ana M., 1234</b>.</p>
   <textarea id="lista" rows="7" style="width:100%;font-size:19px;padding:10px;border:3px solid var(--linea);border-radius:14px;font-family:inherit;user-select:text;-webkit-user-select:text"></textarea>
@@ -222,8 +228,15 @@ function vProfeDetalle(){
   </tbody></table>${P.det.length?'':'<p>Todavía no ha practicado.</p>'}
   <h2>Errores más frecuentes</h2>
   ${P.errores.length?`<table class="t"><thead><tr><th>Tema</th><th>Pregunta</th><th>Veces</th><th>Contestó</th><th>Correcta</th></tr></thead><tbody>${P.errores.map(e=>{const m=mod(e.modulo);return `<tr><td>${esc(m?m.titulo:e.modulo)}</td><td>${esc(e.pregunta)}</td><td>${e.veces}</td><td>${esc(e.ultima_respuesta??'')}</td><td>${esc(e.correcta)}</td></tr>`;}).join('')}</tbody></table>`:'<p>Sin errores registrados.</p>'}
-  <h2>Cambiar PIN</h2>
-  <div class="card"><div class="fila-form"><div><label>Nuevo PIN (4 números)</label><input type="text" id="npin" inputmode="numeric" maxlength="4"></div><div></div><button class="btn" id="cpin">Guardar PIN</button></div></div>`;
+  <h2>Datos del alumno</h2>
+  <div class="card"><label>Nombre</label><input type="text" id="nnombre" value="${esc(a.nombre)}">
+   <div class="fila-acc" style="justify-content:flex-start;margin-bottom:14px"><button class="btn chico" id="cnombre">Guardar nombre</button></div>
+   <div class="fila-form"><div><label>PIN (4 números)${a.pin?` · actual: <b>${esc(a.pin)}</b>`:' · no guardado'}</label><input type="text" id="npin" inputmode="numeric" maxlength="4" value="${esc(a.pin||'')}"></div><div></div><button class="btn" id="cpin">Guardar PIN</button></div></div>
+  <h2>Baja del grupo</h2>
+  <div class="card"><p>${a.activo===false?'Este alumno está dado de baja: ya no aparece en la lista de entrada, pero se conserva su historial.':'Si el alumno se va del grupo, dalo de baja: deja de aparecer en la lista de entrada y se conserva su historial.'}</p>
+   <div class="fila-acc" style="justify-content:flex-start">
+   <button class="btn ${a.activo===false?'ok':'nar'} chico" id="cbaja">${a.activo===false?'Reactivar alumno':'Dar de baja'}</button>
+   <button class="btn sec chico" id="celim">Eliminar definitivamente</button></div></div>`;
 }
 
 // ---------- render + eventos ----------
@@ -287,6 +300,15 @@ function bind(){
   if(p==='profepanel'){
     on('#salirp',()=>{S.profe.jwt=null;location.hash='';rutear();});
     on('#act',async()=>{await cargarResumen();render();toast('Actualizado');});
+    on('#verpin',()=>{S.profe.verpin=!S.profe.verpin;render();});
+    on('#listapin',()=>{const l=S.profe.resumen.filter(a=>a.activo!==false&&a.pin).map(a=>({nombre:a.nombre,pin:a.pin,ok:true}));
+      if(!l.length){toast('Todavía no hay PINes guardados.');return;}S.profe.nuevos={resultado:l,lista:true};render();window.scrollTo(0,0);});
+    on('#pinfalt',async()=>{
+      if(!confirm('Se cambiará el PIN de los alumnos que no tienen PIN visible. Si ya les diste uno, dejará de servir. ¿Continuar?'))return;
+      try{const res=await rpc('profe_pines_faltantes',{},S.profe.jwt)||[];await cargarResumen();
+        S.profe.nuevos={resultado:res.map(x=>({nombre:x.nombre,pin:x.pin,ok:true})),lista:true};render();window.scrollTo(0,0);}
+      catch(e){toast('No se pudo. ¿Ya corriste el SQL 03 en Supabase?');}
+    });
     on('#nuevos',()=>{S.profe.nuevos={};render();});
     on('#cerrarn',async()=>{S.profe.nuevos=null;await cargarResumen();render();});
     on('#crearn',crearAlumnos);
@@ -298,8 +320,25 @@ function bind(){
     on('#cpin',async()=>{
       const v=$app.querySelector('#npin').value.trim();
       if(!/^\d{4}$/.test(v)){toast('El PIN debe tener 4 números.');return;}
-      try{await rpc('profe_cambiar_pin',{p_id:S.profe.alumno.alumno_id,p_pin:v},S.profe.jwt);toast('PIN cambiado: '+v);$app.querySelector('#npin').value='';}
-      catch(e){toast('No se pudo cambiar el PIN.');}
+      try{await rpc('profe_cambiar_pin',{p_id:S.profe.alumno.alumno_id,p_pin:v},S.profe.jwt);S.profe.alumno.pin=v;toast('PIN guardado: '+v);render();}
+      catch(e){toast('No se pudo guardar el PIN.');}
+    });
+    on('#cnombre',async()=>{
+      const v=$app.querySelector('#nnombre').value.trim();if(!v){toast('Escribe un nombre.');return;}
+      try{await rpc('profe_renombrar',{p_id:S.profe.alumno.alumno_id,p_nombre:v},S.profe.jwt);S.profe.alumno.nombre=v;toast('Nombre guardado');render();}
+      catch(e){toast(/unique|duplicate/i.test(e.message)?'Ya existe un alumno con ese nombre.':'No se pudo guardar el nombre.');}
+    });
+    on('#cbaja',async()=>{
+      const a=S.profe.alumno,nuevo=a.activo===false;
+      if(!nuevo&&!confirm('¿Dar de baja a '+a.nombre+'? Ya no podrá entrar, pero se conserva su historial.'))return;
+      try{await rpc('profe_activar',{p_id:a.alumno_id,p_activo:nuevo},S.profe.jwt);await cargarResumen();S.pantalla='profepanel';render();toast(nuevo?'Alumno reactivado':'Alumno dado de baja');}
+      catch(e){toast('No se pudo. ¿Ya corriste el SQL 03 en Supabase?');}
+    });
+    on('#celim',async()=>{
+      const a=S.profe.alumno;
+      if(!confirm('¿Eliminar DEFINITIVAMENTE a '+a.nombre+' y todo su progreso? Esto no se puede deshacer.'))return;
+      try{await rpc('profe_eliminar',{p_id:a.alumno_id},S.profe.jwt);await cargarResumen();S.pantalla='profepanel';render();toast('Alumno eliminado');}
+      catch(e){toast('No se pudo eliminar.');}
     });
   }
 }
@@ -397,6 +436,7 @@ async function crearAlumnos(){
     try{await rpc('profe_crear_alumno',{p_nombre:nombre,p_pin:pin},S.profe.jwt);res.push({nombre,pin,ok:true});}
     catch(e){res.push({nombre,pin,ok:false,err:/unique|duplicate/i.test(e.message)?'Ya existe ese nombre':'No se pudo crear'});}
   }
+  try{await cargarResumen();}catch(e){}
   S.profe.nuevos={resultado:res};render();
 }
 

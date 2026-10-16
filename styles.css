@@ -161,6 +161,6 @@ label{font-weight:800;font-size:16px;color:var(--vino)}
   .marca .rot{height:34px} .marca .av{height:46px}
   #tablero::before,#tablero::after{opacity:.12}
 }
-@media print{#tablero{border:0;box-shadow:none;background:#fff}#tablero::before,#tablero::after,.hero,.marca,.pie{display:none}h1,h2,p{color:#000;text-shadow:none}}
+@media print{.solo-pantalla{display:none!important}#tablero{border:0;box-shadow:none;background:#fff}#tablero::before,#tablero::after,.hero,.marca,.pie{display:none}h1,h2,p{color:#000;text-shadow:none}}
 @keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
 .pop{animation:pop .3s ease-out}
