@@ -135,7 +135,41 @@ const DECS=[
   {n:3,nombre:'Entre 10, 100 y 1000',recuerda:'Cuenta los ceros: entre 10 es 1 lugar, entre 100 son 2 y entre 1000 son 3, siempre a la izquierda. Ejemplo: 45 ÷ 1000 = 0.045.',gen:decDivGen(3)}]},
 ];
 DECS.forEach(m=>m.grupo='decimales');
+// ---------- MEDIDAS (conversión de unidades) ----------
+const FAM={
+ long:{base:'m',nom:'metro',sim:['km','hm','dam','m','dm','cm','mm'],nombres:['kilómetro','hectómetro','decámetro','metro','decímetro','centímetro','milímetro'],
+   usuales:[[0,3],[3,5],[3,6],[5,6]]},
+ cap:{base:'l',nom:'litro',sim:['kl','hl','dal','l','dl','cl','ml'],nombres:['kilolitro','hectolitro','decalitro','litro','decilitro','centilitro','mililitro'],
+   usuales:[[0,3],[3,5],[3,6],[4,5]]},
+ masa:{base:'g',nom:'gramo',sim:['kg','hg','dag','g','dg','cg','mg'],nombres:['kilogramo','hectogramo','decagramo','gramo','decigramo','centigramo','miligramo'],
+   usuales:[[0,3],[3,6],[3,5]]}};
+function medPreg(f,i,j){ // convierte de la unidad i a la unidad j
+  const F=FAM[f],s=Math.abs(j-i),baja=j>i;
+  let ent,d=0,resp,txt;
+  if(baja){ if(R(0,2)===0){do{ent=R(11,99);}while(ent%10===0);d=1;txt=(ent/10).toFixed(1);}else{ent=R(2,99);txt=String(ent);}
+    resp=Math.round(ent*Math.pow(10,s-d)*1e6)/1e6; }
+  else { ent=R(2,s>=3?9999:999); txt=String(ent); resp=Math.round(ent/Math.pow(10,s)*1e6)/1e6; }
+  const ruta=[];for(let k=i;k!==j;k+=(baja?1:-1))ruta.push(F.sim[k]);ruta.push(F.sim[j]);
+  const pista=(baja
+    ?`De ${F.sim[i]} a ${F.sim[j]} bajas ${s} escalón${s>1?'es':''} (${ruta.join(' → ')}). Cada escalón es ×10: recorre el punto ${s} lugar${s>1?'es':''} a la derecha.`
+    :`De ${F.sim[i]} a ${F.sim[j]} subes ${s} escalón${s>1?'es':''} (${ruta.join(' → ')}). Cada escalón es ÷10: recorre el punto ${s} lugar${s>1?'es':''} a la izquierda.`);
+  return {vis:{tipo:'esc',sim:F.sim,desde:i,hasta:j},q:`${txt} ${F.sim[i]} = ? ${F.sim[j]}`,resp,pista};
+}
+function medGen(f,nivel){return ()=>unicas(10,()=>{
+  const F=FAM[f];let i,j;
+  if(nivel<=2){const p=F.usuales[R(0,F.usuales.length-1)];i=nivel===1?p[0]:p[1];j=nivel===1?p[1]:p[0];}
+  else{do{i=R(0,6);j=R(0,6);}while(i===j||Math.abs(i-j)>3||(nivel===3&&j<i));}
+  return medPreg(f,i,j);});}
+const medRec=f=>{const F=FAM[f];return `Escalera: ${F.sim.join(' · ')}. Cada escalón vale 10. Si bajas (a una unidad más pequeña) multiplicas; si subes, divides.`;};
+const MEDS=[['long','longitud','Longitud (metros)','m'],['cap','capacidad','Capacidad (litros)','l'],['masa','masa','Masa (gramos)','g']].map(([f,id,t,ic])=>({
+ id:'med-'+id,titulo:t,icono:ic,punto:true,niveles:[
+  {n:1,nombre:'Usuales: de mayor a menor (×)',recuerda:medRec(f)+' Ejemplo: 3 '+FAM[f].sim[0]+' = 3000 '+FAM[f].sim[3]+'.',gen:medGen(f,1)},
+  {n:2,nombre:'Usuales: de menor a mayor (÷)',recuerda:medRec(f)+' Ejemplo: 4500 '+FAM[f].sim[3]+' = 4.5 '+FAM[f].sim[0]+'.',gen:medGen(f,2)},
+  {n:3,nombre:'Todas las unidades: bajando (×)',recuerda:medRec(f)+' Cuenta los escalones y recorre el punto a la derecha.',gen:medGen(f,3)},
+  {n:4,nombre:'Todas las unidades: subiendo y bajando',recuerda:medRec(f)+' Primero decide si subes o bajas, luego cuenta los escalones.',gen:medGen(f,4)}]}));
+MEDS.forEach(m=>m.grupo='medidas');
+
 OPS.forEach(m=>m.grupo='operaciones');
-window.MODULOS=[...TABLAS,...OPS,...DECS];
+window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS];
 window.R=R;window.fmtNum=fmt;
 })();

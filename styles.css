@@ -208,3 +208,10 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 
 .teclado .ancho{grid-column:1/-1;min-height:64px;font-size:26px}
 .mod .ic{min-height:40px}
+
+.esc{display:flex;justify-content:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.esc span{min-width:56px;padding:8px 6px;border-radius:10px;background:#efe6cf;color:#555;font-weight:800;font-size:22px;text-align:center}
+.esc span.de{background:var(--naranja);color:#fff}
+.esc span.a{background:var(--verde);color:#fff}
+.q-box .esc+.q-linea{font-size:48px}
+@media(max-width:600px){.esc span{min-width:40px;font-size:17px}.q-box .esc+.q-linea{font-size:36px}}

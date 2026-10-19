@@ -125,7 +125,7 @@ function tarjetaMod(m){const r=resumenMod(m);return `<button class="mod" data-m=
 function vHome(){
   const tablas=window.MODULOS.filter(m=>m.grupo==='tablas');
   const ops=window.MODULOS.filter(m=>m.grupo==='operaciones');
-  const decs=window.MODULOS.filter(m=>m.grupo==='decimales');
+  const decs=window.MODULOS.filter(m=>m.grupo==='decimales'),meds=window.MODULOS.filter(m=>m.grupo==='medidas');
   return `${top(`<button class="btn sec chico" id="materias">← Materias</button>`)}
   <h1>Matemáticas</h1><p class="sub-h">¿Qué practicamos hoy?</p>
   <h2>Tablas de multiplicar</h2>
@@ -133,7 +133,9 @@ function vHome(){
   <h2>Operaciones</h2>
   <div class="grid g-mod">${ops.map(tarjetaMod).join('')}</div>
   <h2>Decimales</h2>
-  <div class="grid g-mod">${decs.map(tarjetaMod).join('')}</div>`;
+  <div class="grid g-mod">${decs.map(tarjetaMod).join('')}</div>
+  <h2>Medidas</h2>
+  <div class="grid g-mod">${meds.map(tarjetaMod).join('')}</div>`;
 }
 function recuerdaEsp(m){
   if(m.grupo==='orto')return `<b>Recuerda las reglas:</b><ul class="reglas">${m.reglas.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
@@ -158,6 +160,7 @@ function vIntro(){
 function vis(p){
   const v=p.vis;
   if(v.tipo==='col'){const a=String(v.a),b=String(v.b);return `<div class="col"><div class="r"><span>${a}</span></div><div class="r"><span class="op">${v.op}</span><span>${b}</span></div><div class="raya"></div></div>`;}
+  if(v.tipo==='esc'){return `<div class="esc">${v.sim.map((u,k)=>`<span class="${k===v.desde?'de':(k===v.hasta?'a':'')}">${u}</span>`).join('')}</div><div class="q-linea">${esc(p.q)}</div>`;}
   if(v.tipo==='div'){return `<div class="galera"><span class="dv">${v.divisor}</span><span class="dd">${v.dividendo}</span></div>`;}
   return `<div class="q-linea">${esc(p.q)}</div>`;
 }
