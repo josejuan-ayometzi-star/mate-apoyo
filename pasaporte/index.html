@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pasaporte por el planeta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0F3D3E; --ink2:#0A2C2D; --paper:#F6F1E3; --paper2:#ECE5D1; --card:#FFFDF8;
+  --stamp:#C8431D; --sun:#F2B134; --moss:#3C7A4B; --sea:#2E7C86; --text:#1F3B3A; --soft:#5B7371;
+  --l1:#3C7A4B; --l2:#C98512; --l3:#2F6F8B;
+  --display:'Fredoka','Trebuchet MS',sans-serif; --body:'Nunito Sans',system-ui,sans-serif; --mono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--body); color:var(--text); min-height:100vh;
+  background:var(--ink);
+  background-image:radial-gradient(circle at 15% 10%,rgba(46,124,134,.45),transparent 55%),radial-gradient(circle at 85% 90%,rgba(242,177,52,.18),transparent 50%);
+  background-attachment:fixed; padding:14px 14px 40px;
+}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.wrap{max-width:920px;margin:0 auto}
+
+/* HUD */
+.hud{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#F6F1E3;padding:4px 6px 12px;flex-wrap:wrap}
+.hud .brand{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.3px}
+.hud .brand small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#A9C3BD;font-weight:400}
+.hud .stats{display:flex;gap:10px;align-items:center}
+.pill{font-family:var(--mono);font-size:13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;white-space:nowrap}
+.pill b{color:var(--sun)}
+.hud[hidden],.bar[hidden]{display:none}
+.bar{height:8px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;margin:0 6px 14px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sun),#F7CF7A);border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+
+/* book */
+.book{background:var(--paper);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.35),inset 0 0 0 1px rgba(15,61,62,.12);padding:26px;position:relative;overflow:hidden}
+.book::before{content:"";position:absolute;inset:8px;border:1.5px dashed rgba(15,61,62,.22);border-radius:10px;pointer-events:none}
+.screen{display:none;position:relative}
+.screen.active{display:block;animation:enter .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.stagger>*{opacity:0;animation:enter .5s cubic-bezier(.2,.8,.2,1) forwards}
+.stagger>*:nth-child(1){animation-delay:.05s}.stagger>*:nth-child(2){animation-delay:.14s}.stagger>*:nth-child(3){animation-delay:.23s}
+.stagger>*:nth-child(4){animation-delay:.32s}.stagger>*:nth-child(5){animation-delay:.41s}.stagger>*:nth-child(6){animation-delay:.5s}
+
+h1,h2,h3{font-family:var(--display);color:var(--ink);margin:0;font-weight:600;line-height:1.1}
+h1{font-size:clamp(32px,6vw,52px)} h2{font-size:clamp(24px,4vw,34px)} h3{font-size:22px}
+p{line-height:1.5;margin:0}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--stamp);font-weight:700}
+.lead{font-size:18px;color:var(--text)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+.btn{appearance:none;border:0;cursor:pointer;min-height:48px;padding:12px 24px;border-radius:12px;font-family:var(--display);font-size:19px;font-weight:600;background:var(--stamp);color:#fff;box-shadow:0 4px 0 #8F2F10;transition:transform .12s,box-shadow .12s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8F2F10}
+.btn.alt{background:var(--ink);box-shadow:0 4px 0 #061a1b}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:2px solid var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700;font-size:16px;color:var(--ink)}
+.field input,.field textarea{font-family:var(--body);font-size:17px;padding:12px 14px;border-radius:10px;border:2px solid #B8C4BC;background:var(--card);color:var(--text);min-height:48px;width:100%}
+.field textarea{min-height:92px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--sea);outline:none}
+
+/* start */
+.start-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center}
+.cover-stamp{width:min(260px,70%);aspect-ratio:1;margin:0 auto;border:7px double var(--stamp);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--stamp);transform:rotate(-9deg);font-family:var(--display);font-weight:700;padding:18px;animation:wob 6s ease-in-out infinite}
+.cover-stamp span{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase}
+.cover-stamp strong{font-size:34px;line-height:1}
+@keyframes wob{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(-5deg) scale(1.03)}}
+
+/* map */
+.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.station{appearance:none;text-align:left;cursor:pointer;min-height:112px;border-radius:12px;padding:14px;background:var(--card);border:2px dashed #9FB0A8;position:relative;display:flex;flex-direction:column;gap:4px;transition:transform .12s,border-color .2s}
+.station:active{transform:scale(.97)}
+.station:hover{border-color:var(--sea)}
+.station .no{font-family:var(--mono);font-size:12px;color:var(--soft);letter-spacing:1px}
+.station .nm{font-family:var(--display);font-weight:600;font-size:20px;color:var(--ink);line-height:1.1}
+.station .rg{font-size:13px;color:var(--soft);line-height:1.3}
+.station.done{border:2px solid var(--moss);background:#F1F7EC}
+.mini{position:absolute;right:8px;top:8px;width:54px;height:54px;border:3px double var(--stamp);border-radius:50%;color:var(--stamp);font-family:var(--mono);font-size:9px;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);font-weight:700;line-height:1.1}
+.station.done .txt{padding-right:52px}
+
+/* station / reto */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:12px;font-weight:700;border-radius:999px;padding:5px 11px;letter-spacing:.3px}
+.chip.l1{background:#DDEEDC;color:#1F5A2E}.chip.l2{background:#FBE7BE;color:#7A4A00}.chip.l3{background:#D6E7EF;color:#1F5570}
+.chip.c{background:#fff;border:1.5px solid var(--ink);color:var(--ink)}
+.chip.sta{background:var(--sun);color:var(--ink)}.chip.nom{background:var(--ink);color:#F6F1E3}.chip.cit{border:1.5px solid var(--ink);color:var(--ink)}.chip.tbd{border:1.5px dashed var(--stamp);color:#A83715}
+.card{background:var(--card);border:2px solid #E3DCC8;border-radius:14px;padding:18px}
+.dots{display:flex;gap:8px}.dots i{width:34px;height:8px;border-radius:99px;background:#CFC8B0;transition:background .3s}.dots i.on{background:var(--moss)}.dots i.cur{background:var(--sun)}
+.q{font-size:20px;line-height:1.45;color:var(--ink);font-weight:600}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{appearance:none;text-align:left;cursor:pointer;min-height:56px;padding:14px 16px;border-radius:12px;background:var(--card);border:2px solid #C9D2CA;font-size:17px;line-height:1.4;color:var(--text);transition:transform .1s,border-color .2s,background .2s;display:flex;gap:12px;align-items:flex-start}
+.opt .ltr{font-family:var(--mono);font-weight:700;background:var(--ink);color:#F6F1E3;border-radius:8px;min-width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.opt:active:not([disabled]){transform:scale(.98)}
+.opt.ok{background:#E3F2DB;border-color:var(--moss);animation:pulse .6s ease;opacity:1}
+.opt.bad{background:#FBE3DA;border-color:var(--stamp);animation:shake .45s;opacity:1}
+.opt.dim{opacity:.55;animation:none}
+.opt[disabled]{cursor:default}
+@keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.fb{border-radius:12px;padding:14px 16px;font-size:16px;line-height:1.5;animation:enter .4s both}
+.fb.good{background:#E3F2DB;border:2px solid var(--moss)}.fb.nope{background:#FBE3DA;border:2px solid var(--stamp)}.fb.hint{background:#FDF0CF;border:2px solid var(--sun)}
+.fb b{font-family:var(--display);font-size:18px}
+.burst{position:absolute;pointer-events:none;width:0;height:0;z-index:30}
+.burst i{position:absolute;left:0;top:0;width:10px;height:10px;border-radius:2px;animation:fly .9s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+
+/* stamp overlay */
+#overlay{position:fixed;inset:0;background:rgba(10,44,45,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:22px;z-index:50;padding:20px;text-align:center}
+#overlay.on{display:flex;animation:fadein .3s both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.paperbit{background:var(--paper);border-radius:12px;padding:30px 38px;box-shadow:0 20px 50px rgba(0,0,0,.5);position:relative}
+.bigstamp{width:260px;height:260px;border:8px double var(--stamp);border-radius:50%;color:var(--stamp);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:18px;font-family:var(--display);font-weight:700;transform:rotate(-8deg);opacity:0;animation:drop .85s cubic-bezier(.2,.9,.3,1.25) .15s forwards;mix-blend-mode:multiply}
+.bigstamp .t{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.bigstamp .n{font-size:30px;line-height:1.05}
+.bigstamp .r{font-family:var(--body);font-size:13px;font-weight:600;line-height:1.2}
+.bigstamp .s{font-size:26px;letter-spacing:6px}
+@keyframes drop{0%{opacity:0;transform:translateY(-320px) rotate(-40deg) scale(1.9)}60%{opacity:1;transform:translateY(6px) rotate(-6deg) scale(.96)}78%{transform:translateY(-8px) rotate(-9deg) scale(1.02)}100%{opacity:1;transform:rotate(-8deg) scale(1)}}
+.ovtxt{color:#F6F1E3;font-family:var(--display);font-size:24px}
+
+/* log */
+.log h2{margin-bottom:4px}
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.scorebox{background:var(--card);border:2px solid #E3DCC8;border-radius:12px;padding:14px}
+.scorebox .big{font-family:var(--display);font-size:34px;font-weight:700;color:var(--ink)}
+.meter{height:10px;background:#E3DCC8;border-radius:99px;overflow:hidden;margin-top:6px}.meter i{display:block;height:100%;border-radius:99px}
+table.t{width:100%;border-collapse:collapse;font-size:15px}
+table.t th,table.t td{border-bottom:1.5px solid #D9D1BA;padding:8px 6px;text-align:left;vertical-align:top}
+table.t th{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--soft)}
+.ans{background:var(--card);border:1.5px solid #D9D1BA;border-radius:10px;padding:12px 14px;white-space:pre-wrap}
+.ans small{display:block;font-family:var(--mono);color:var(--stamp);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-size:11px;font-weight:700}
+
+
+/* logos / portada / fotos / decoración */
+.logos{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.logo{height:56px;width:auto;max-width:220px;object-fit:contain;display:block;background:#fff;border-radius:10px;padding:3px 6px}
+.logo-txt{font-family:var(--display);font-weight:600;color:var(--ink);font-size:18px;letter-spacing:.3px;border-left:4px solid var(--stamp);padding-left:10px;line-height:1.1}
+.hudlogos{display:flex;gap:8px;align-items:center}
+.hudlogos .logo{height:34px;background:rgba(255,255,255,.94);border-radius:8px;padding:3px 7px}
+.hudlogos .logo-txt{display:none}
+.hudrow{display:flex;align-items:center;gap:14px}
+.screen{z-index:1}
+.deco{position:absolute;pointer-events:none;color:var(--moss);opacity:.16;z-index:0;animation:sway 8s ease-in-out infinite;transform-origin:50% 90%}
+.deco.d1{width:120px;height:120px;right:-18px;top:-14px}
+.deco.d2{width:96px;height:96px;left:-14px;bottom:-34px;color:var(--sea);animation-delay:-3s}
+.deco.d3{width:84px;height:84px;right:30px;bottom:-34px;color:var(--stamp);animation-delay:-5s;opacity:.12}
+.deco.d4{width:70px;height:70px;right:140px;top:-36px;color:var(--sun);opacity:.3;animation-delay:-2s}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-6px)}}
+.cover{display:flex;flex-direction:column;gap:26px}
+.cover-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:2px dashed rgba(15,61,62,.25)}
+.cover-top .tag{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--soft);text-align:right}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:24px;align-items:center}
+.globe{position:relative;width:min(310px,82%);aspect-ratio:1;margin:0 auto}
+.globe svg.g{width:100%;height:100%;display:block;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.globe .cover-stamp{position:absolute;right:-12%;bottom:-6%;width:46%;margin:0;border-width:5px;padding:6px;background:rgba(246,241,227,.9);animation:none;transform:rotate(-9deg)}
+.globe .cover-stamp strong{font-size:21px}.globe .cover-stamp span{font-size:9px;letter-spacing:1.2px}
+.orb{position:absolute;width:20%;aspect-ratio:1;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 10px rgba(15,61,62,.35);animation:bob 5s ease-in-out infinite}
+.orb.o1{left:-6%;top:12%}.orb.o2{right:-4%;top:2%;animation-delay:-1.5s}.orb.o3{left:2%;bottom:0;animation-delay:-3s}.orb.o4{right:20%;top:-9%;animation-delay:-4s;width:17%}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.strip{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.strip .ph{width:62px;height:62px;border-radius:50%;border:3px solid #fff;box-shadow:0 3px 8px rgba(15,61,62,.25)}
+.strip .ph:nth-child(odd){transform:rotate(-5deg)}.strip .ph:nth-child(even){transform:rotate(5deg)}
+.unit{display:flex;flex-direction:column;gap:18px}
+.idea{background:var(--ink);color:#F6F1E3;border-radius:14px;padding:18px 22px}
+.idea .kicker{color:var(--sun)}
+.idea p{font-family:var(--display);font-size:clamp(18px,2.6vw,25px);line-height:1.3;margin-top:6px;font-weight:500}
+.cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cbox{background:var(--card);border:2px solid #E3DCC8;border-radius:14px;padding:14px 16px}
+.cbox h3{font-size:18px;margin-bottom:8px}
+.cl{display:flex;flex-direction:column;gap:8px}
+.cl div{font-size:15px;line-height:1.35}.cl b{font-family:var(--display);font-size:17px;color:var(--ink);font-weight:600}
+.lgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lcard{border-radius:14px;padding:14px 14px 16px;color:#fff;position:relative;overflow:hidden;min-height:112px}
+.lcard .n{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.92;font-weight:700}
+.lcard .t{font-family:var(--display);font-size:19px;font-weight:600;line-height:1.15;margin-top:4px;position:relative}
+.lcard svg{position:absolute;right:-6px;bottom:-8px;width:72px;height:72px;opacity:.25;color:#fff}
+.cycle{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.cycle span{font-family:var(--mono);font-size:12px;background:var(--card);border:1.5px solid var(--ink);border-radius:999px;padding:6px 12px;color:var(--ink);font-weight:700}
+.cycle i{font-style:normal;color:var(--stamp);font-weight:700}
+.fine{font-size:12px;color:var(--soft);line-height:1.4}
+.sect{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--stamp);font-weight:700;margin-bottom:8px}
+.ph{display:block;position:relative;overflow:hidden;background:#DCD6C0;flex-shrink:0}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph.fail{background:repeating-linear-gradient(45deg,#E3EBD8 0 8px,#D6E2CA 8px 16px)}
+.ph.fail::after{content:"foto";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--soft)}
+.ph.big{width:100%;aspect-ratio:4/3;border-radius:12px;border:5px solid #fff;box-shadow:0 8px 20px rgba(15,61,62,.28);transform:rotate(-1.5deg)}
+.ph.big.fail::after{font-size:14px;padding:14px;text-align:center;content:"No se pudo cargar la foto. Revisa que el iPad tenga internet."}
+.ph.sm{width:44px;height:44px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(15,61,62,.3)}
+.ph.xs{width:34px;height:34px;border-radius:50%}
+.ph.pol{position:absolute;right:-30px;top:-34px;width:112px;height:112px;border-radius:50%;border:5px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.4);transform:rotate(8deg);z-index:2;opacity:0;animation:fadein .5s .9s forwards}
+.fig{margin:0}.fig figcaption{margin-top:10px;font-size:11px;color:var(--soft);line-height:1.35}.fig a{color:var(--sea)}
+.intro-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:18px;align-items:start}
+.tn{display:flex;align-items:center;gap:8px}
+.credits{font-size:12px;color:var(--soft);line-height:1.55}.credits a{color:inherit}
+.paws{display:flex;gap:10px;margin-bottom:16px;color:var(--moss);opacity:.28}.paws svg{width:22px;height:22px}.paws svg:nth-child(even){transform:translateY(8px) rotate(14deg)}.paws svg:nth-child(odd){transform:rotate(-10deg)}
+.station{flex-direction:row;align-items:center;gap:12px}
+.station .ph{width:62px;height:62px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(15,61,62,.3)}
+.station:not(.done) .ph img{filter:grayscale(1) contrast(.95);opacity:.8}
+.station .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+
+@media (max-width:720px){
+  .map-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .start-grid{grid-template-columns:1fr} .score-grid{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr} .globe{width:min(260px,70%)} .cgrid,.lgrid{grid-template-columns:1fr} .intro-grid{grid-template-columns:1fr} .ph.pol{right:-12px;width:84px;height:84px}
+  .cover-top .tag{text-align:left}
+  .book{padding:18px}
+}
+@media (max-width:480px){
+  .map-grid{grid-template-columns:minmax(0,1fr)}
+  .station{min-height:96px}
+  body{padding:10px 10px 32px}
+  .btn{width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
+  .stagger>*{opacity:1}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .hud,.bar,.no-print,#overlay,.deco,.screen:not(#s-log){display:none!important}
+  #s-log{display:block!important;animation:none}
+  .book{box-shadow:none;border-radius:0;padding:0;background:#fff}.book::before{display:none}
+  .wrap{max-width:none}
+  .scorebox,.ans,.card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-leaf" viewBox="0 0 64 64"><path d="M8 56C8 28 24 10 56 8C56 40 40 56 12 56Z" fill="currentColor"/><path d="M10 54C22 38 34 26 50 14" stroke="#F6F1E3" stroke-width="2.5" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-paw" viewBox="0 0 64 64"><ellipse cx="32" cy="42" rx="15" ry="12" fill="currentColor"/><ellipse cx="14" cy="27" rx="6" ry="8" fill="currentColor"/><ellipse cx="27" cy="16" rx="6" ry="8" fill="currentColor"/><ellipse cx="41" cy="16" rx="6" ry="8" fill="currentColor"/><ellipse cx="53" cy="27" rx="6" ry="8" fill="currentColor"/></symbol>
+<symbol id="i-wave" viewBox="0 0 64 64"><path d="M2 24c8-8 14-8 22 0s14 8 22 0 12-6 16-2M2 42c8-8 14-8 22 0s14 8 22 0 12-6 16-2" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-sun" viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" fill="currentColor"/><g stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M32 6v8M32 50v8M6 32h8M50 32h8M13 13l6 6M45 45l6 6M13 51l6-6M45 19l6-6"/></g></symbol>
+<symbol id="i-law" viewBox="0 0 64 64"><g stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8v46M16 56h32M10 20h44"/><path d="M10 20l-6 18h16zM54 20l-6 18h16z"/></g></symbol>
+<symbol id="i-heart" viewBox="0 0 64 64"><path d="M32 56C8 38 6 19 20 14c7-2 12 2 12 8 0-6 5-10 12-8 14 5 12 24-12 42Z" fill="currentColor"/></symbol>
+</svg>
+
+<div class="wrap">
+
+  <div class="hud" id="hud" hidden>
+    <div class="hudrow"><div class="hudlogos" data-logos="34"></div><div class="brand">Pasaporte por el planeta<small>Cómo compartimos el planeta</small></div></div>
+    <div class="stats"><span class="pill">Sellos <b id="hudSellos">0</b>/12</span><span class="pill">Puntos <b id="hudPts">0</b></span></div>
+  </div>
+  <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+
+  <main class="book">
+    <svg class="deco d1" aria-hidden="true"><use href="#i-leaf"/></svg>
+    <svg class="deco d2" aria-hidden="true"><use href="#i-wave"/></svg>
+    <svg class="deco d3" aria-hidden="true"><use href="#i-paw"/></svg>
+    <svg class="deco d4" aria-hidden="true"><use href="#i-sun"/></svg>
+
+    <!-- INICIO / PORTADA -->
+    <section class="screen active" id="s-start">
+      <div class="cover">
+        <div class="cover-top">
+          <div class="logos" data-logos="58"></div>
+          <div class="tag">Centro Educativo Crecer<br>Español · Quinto grado · Unidad de indagación</div>
+        </div>
+
+        <div class="hero">
+          <div class="stack stagger">
+            <div class="kicker">Tema transdisciplinar · Cómo compartimos el planeta</div>
+            <h1>Pasaporte por el planeta</h1>
+            <p class="lead">Viajarás por 12 lugares de México donde viven animales que solo existen aquí y que están en peligro. En cada estación tomarás decisiones y ganarás un <b>sello de viaje</b>.</p>
+            <div class="field"><label for="nombre">¿Cómo te llamas?</label><input id="nombre" type="text" maxlength="40" autocomplete="off" placeholder="Escribe tu nombre"></div>
+            <div class="row"><button class="btn" id="btnStart" disabled>Comenzar el viaje</button></div>
+          </div>
+          <div class="globe" aria-hidden="true">
+            <svg class="g" viewBox="0 0 200 200">
+              <defs><radialGradient id="sea" cx="35%" cy="30%"><stop offset="0" stop-color="#5BB0BA"/><stop offset="1" stop-color="#1D5F69"/></radialGradient><clipPath id="gc"><circle cx="100" cy="100" r="86"/></clipPath></defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="#0F3D3E" stroke-width="2" stroke-dasharray="3 6"/>
+              <circle cx="100" cy="100" r="86" fill="url(#sea)"/>
+              <g clip-path="url(#gc)" fill="#6FA35B">
+                <path d="M30 70C45 50 70 48 82 60C90 70 78 82 84 96C88 110 70 122 60 116C48 108 52 94 40 90C30 86 24 78 30 70Z"/>
+                <path d="M110 40C130 32 158 44 164 62C168 76 150 80 146 94C142 108 150 120 138 128C124 136 112 120 114 104C116 90 100 84 102 66C103 54 100 46 110 40Z"/>
+                <path d="M70 140C84 132 104 140 108 156C110 168 92 176 78 170C64 164 58 148 70 140Z"/>
+              </g>
+              <ellipse cx="72" cy="62" rx="26" ry="14" fill="#fff" opacity=".18" transform="rotate(-25 72 62)"/>
+            </svg>
+            <span class="orb o1" id="orb1"></span><span class="orb o2" id="orb2"></span><span class="orb o3" id="orb3"></span><span class="orb o4" id="orb4"></span>
+            <div class="cover-stamp"><span>Pasaporte</span><strong>12<br>sellos</strong></div>
+          </div>
+        </div>
+
+        <div><div class="sect">Los 12 animales de tu viaje</div><div class="strip" id="strip"></div></div>
+
+        <div class="unit">
+          <div class="idea"><div class="kicker">Idea central</div><p>«Los derechos y compromisos creados por el hombre benefician a los seres vivos».</p></div>
+
+          <div class="cgrid">
+            <div class="cbox"><h3>Conceptos clave</h3><div class="cl">
+              <div><b>Función</b><br>¿Cómo funciona?</div>
+              <div><b>Perspectiva</b><br>¿Cuáles son los puntos de vista?</div>
+              <div><b>Responsabilidad</b><br>¿Cuál es nuestra responsabilidad?</div>
+            </div></div>
+            <div class="cbox"><h3>Conceptos relacionados</h3><div class="cl">
+              <div><b>Interdependencia</b><br>Los seres vivos se necesitan unos a otros.</div>
+              <div><b>Legislación</b><br>Las leyes que cuidan a la naturaleza.</div>
+              <div><b>Especie</b><br>Cada tipo de ser vivo del planeta.</div>
+            </div></div>
+          </div>
+
+          <div><div class="sect">Líneas de indagación</div>
+            <div class="lgrid">
+              <div class="lcard" style="background:var(--l1)"><div class="n">Línea 1</div><div class="t">Interdependencia de los seres vivos</div><svg aria-hidden="true"><use href="#i-leaf"/></svg></div>
+              <div class="lcard" style="background:var(--l2)"><div class="n">Línea 2</div><div class="t">Legalidad en temas de extinción de especies</div><svg aria-hidden="true"><use href="#i-law"/></svg></div>
+              <div class="lcard" style="background:var(--l3)"><div class="n">Línea 3</div><div class="t">Nuestra labor en el cuidado del planeta</div><svg aria-hidden="true"><use href="#i-heart"/></svg></div>
+            </div>
+          </div>
+
+          <div><div class="sect">Nuestro ciclo de indagación</div>
+            <div class="cycle"><span>Qué conozco</span><i>›</i><span>Curiosidad</span><i>›</i><span>Exploración</span><i>›</i><span>Investigación</span><i>›</i><span>Compartir</span><i>›</i><span>Nuevos significados</span><i>›</i><span>Acción</span></div>
+          </div>
+
+          <p class="fine">Fotografías: Wikimedia Commons, con licencias libres. Los créditos completos aparecen al final de tu bitácora. Las fotos necesitan internet para verse.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAPA -->
+    <section class="screen" id="s-map">
+      <div class="stack">
+        <div><div class="paws" aria-hidden="true"><svg><use href="#i-paw"/></svg><svg><use href="#i-paw"/></svg><svg><use href="#i-paw"/></svg><svg><use href="#i-paw"/></svg><svg><use href="#i-paw"/></svg></div><div class="kicker">Tu ruta</div><h2>Elige tu siguiente estación</h2><p style="margin-top:6px">Puedes visitar las estaciones en el orden que quieras. Toca una para empezar.</p></div>
+        <div class="map-grid" id="mapGrid"></div>
+        <div class="row" id="mapActions"></div>
+      </div>
+    </section>
+
+    <!-- ESTACIÓN -->
+    <section class="screen" id="s-station">
+      <div class="stack" id="stationBody"></div>
+    </section>
+
+    <!-- REFLEXIÓN -->
+    <section class="screen" id="s-reflect">
+      <div class="stack">
+        <div><div class="kicker">Pasaporte completo</div><h2>Tu reflexión final</h2><p style="margin-top:6px">Ya conociste a los 12 animales. Escribe con tus palabras lo que pensabas y lo que piensas ahora.</p></div>
+        <div class="field"><label for="r1">Antes yo pensaba que…</label><textarea id="r1"></textarea></div>
+        <div class="field"><label for="r2">Ahora pienso que…</label><textarea id="r2"></textarea></div>
+        <div class="field"><label for="r3">Mi compromiso para cuidar a los seres vivos es…</label><textarea id="r3"></textarea></div>
+        <div class="field"><label for="r4">Una pregunta que todavía me da curiosidad (opcional)</label><textarea id="r4"></textarea></div>
+        <div class="row"><button class="btn" id="btnLog" disabled>Ver mi bitácora</button></div>
+      </div>
+    </section>
+
+    <!-- BITÁCORA -->
+    <section class="screen log" id="s-log">
+      <div class="stack" id="logBody"></div>
+    </section>
+  </main>
+</div>
+
+<div id="overlay" role="dialog" aria-modal="true" aria-label="Sello ganado"></div>
+
+<script>
+/* =========================================================
+   DATOS: 12 estaciones × 3 retos (uno por línea de indagación)
+   l = línea (1,2,3) · c = concepto · t = tipo de reto
+   La PRIMERA opción es la correcta; el juego las revuelve.
+   ========================================================= */
+const LINEAS = {
+  1:{n:'Línea 1', t:'Interdependencia de los seres vivos'},
+  2:{n:'Línea 2', t:'Legalidad en temas de extinción de especies'},
+  3:{n:'Línea 3', t:'Nuestra labor en el cuidado del planeta'}
+};
+const CONCEPTOS = [
+  {n:'Función', k:'Concepto clave'},
+  {n:'Perspectiva', k:'Concepto clave'},
+  {n:'Responsabilidad', k:'Concepto clave'},
+  {n:'Interdependencia', k:'Concepto relacionado'},
+  {n:'Legislación', k:'Concepto relacionado'},
+  {n:'Especie', k:'Concepto relacionado'}
+];
+const R = (l,c,t,q,o,e)=>({l,c,t,q,o,e});
+
+const DATA = [
+ { n:'Ajolote', sci:'Ambystoma mexicanum', rg:'Canales de Xochimilco, Ciudad de México',
+   st:[['sta','UICN · Peligro crítico'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es un anfibio que conserva sus branquias toda la vida y puede regenerar partes de su cuerpo.',
+   retos:[
+    R(1,'Interdependencia','Red de vida','Alguien soltó tilapias y carpas en los canales de Xochimilco. ¿Qué le pasa al ajolote?',
+      ['Esos peces se comen sus huevos y crías y le quitan alimento, así que sobreviven menos ajolotes.','Nada: los peces y los ajolotes se llevan bien.','Los ajolotes crecen más porque tienen más compañía.'],
+      'Cuando llega una especie de otro lugar, cambia toda la red de vida. Las tilapias y las carpas compiten con el ajolote por el alimento y se comen sus huevos y crías.'),
+    R(2,'Legislación','La ley','Un amigo quiere llevarse un ajolote silvestre a su casa «para cuidarlo». El ajolote está en la NOM-059 como especie en peligro de extinción. ¿Qué haces?',
+      ['Le explico que las leyes protegen a las especies en peligro y que sacarlas de su hábitat sin permiso está prohibido.','Le digo que no pasa nada, porque es solo uno.','Lo ayudo a atraparlo, pero lo devolvemos en un mes.'],
+      'La Ley General de Vida Silvestre prohíbe capturar o sacar de su hábitat a especies protegidas sin autorización. Aunque sea solo uno, cada ajolote cuenta.'),
+    R(3,'Responsabilidad','Mi compromiso','Ya no quieres a los peces de tu pecera. ¿Qué decides?',
+      ['Los regalo a alguien que los cuide y nunca los suelto en un canal ni en un río.','Los suelto en un canal: allí tendrán más espacio.','Los tiro al drenaje.'],
+      'Soltar mascotas puede introducir especies que dañan a las nativas, como pasó con la tilapia y la carpa. Cuidar o regalar es lo responsable.')
+   ]},
+ { n:'Vaquita marina', sci:'Phocoena sinus', rg:'Alto Golfo de California',
+   st:[['sta','UICN · Peligro crítico'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es la marsopa más pequeña del mundo y quedan muy pocas.',
+   retos:[
+    R(1,'Función','Red de vida','La vaquita come peces pequeños, calamares y crustáceos. ¿Qué papel tiene en la red de vida del mar?',
+      ['Es consumidora: se alimenta de otros animales y ayuda a equilibrar sus poblaciones.','Es productora: fabrica su alimento con la luz del sol.','Es descomponedora: convierte los restos en nutrientes.'],
+      'Los animales que se alimentan de otros seres vivos son consumidores. Las productoras son plantas y algas, y las descomponedoras son hongos, bacterias y lombrices.'),
+    R(2,'Perspectiva','Voces','Las redes de pesca ilegales enredan a las vaquitas, pero muchas familias del Alto Golfo viven de la pesca. ¿Qué propuesta escucha a todas las partes?',
+      ['Usar artes de pesca que no enreden a las vaquitas y apoyar a las familias con otras formas de ganarse la vida.','Prohibir toda la pesca para siempre, sin ofrecer ayuda a nadie.','No cambiar nada, porque la pesca es lo más importante.'],
+      'Perspectiva es ponerse en el lugar de los demás. La mejor propuesta cuida a la vaquita y también a las familias que dependen de la pesca.'),
+    R(3,'Responsabilidad','Mi compromiso','Tu familia va a comprar camarón o pescado. ¿Qué decisión ayuda más a la vaquita?',
+      ['Preferir productos de pesca legal y responsable, y preguntar de dónde vienen.','Comprar lo más barato sin preguntar nada.','Comprar el doble para que los pescadores ganen más.'],
+      'Lo que compramos influye en cómo se pesca. Preguntar y elegir productos de pesca legal desanima a la pesca ilegal que daña a la vaquita.')
+   ]},
+ { n:'Totoaba', sci:'Totoaba macdonaldi', rg:'Golfo de California',
+   st:[['sta','UICN · Peligro crítico'],['nom','NOM-059 · En peligro de extinción'],['cit','CITES · Apéndice I']],
+   dato:'Es un pez enorme: puede medir hasta 2 metros de largo.',
+   retos:[
+    R(1,'Interdependencia','Red de vida','La vaquita y la totoaba viven en el mismo mar y se pesca totoaba con redes ilegales. ¿Qué pasa con la vaquita?',
+      ['Se enreda en esas mismas redes: proteger a una especie ayuda también a la otra.','Nada: no tienen ninguna relación.','Se alimenta de la totoaba, así que le va mejor.'],
+      'Las dos especies comparten el mar y las redes ilegales atrapan a ambas. La interdependencia no siempre es de comida: también compartimos peligros.'),
+    R(2,'Legislación','La ley','La totoaba está en el Apéndice I de CITES. ¿Qué significa?',
+      ['Que su comercio internacional con fines comerciales está prohibido.','Que se puede vender en cualquier país si tiene un permiso de pesca.','Que solo se puede pescar en invierno.'],
+      'CITES es un acuerdo entre países para vigilar el comercio de especies silvestres. El Apéndice I es para las más amenazadas: su comercio internacional está prohibido.'),
+    R(3,'Responsabilidad','Mi compromiso','Ves un anuncio en internet que vende «buche de totoaba». ¿Qué haces?',
+      ['No lo compro ni lo comparto, y le aviso a un adulto para que lo reporte a las autoridades ambientales.','Lo comparto para que otros lo vean.','Lo compro para tenerlo de recuerdo.'],
+      'Comprar o compartir estos anuncios mantiene vivo el negocio ilegal. Avisar a un adulto para reportarlo a la PROFEPA, la autoridad que vigila el cuidado del ambiente, sí ayuda.')
+   ]},
+ { n:'Mapache pigmeo', sci:'Procyon pygmaeus', rg:'Isla de Cozumel, Quintana Roo',
+   st:[['sta','UICN · Peligro crítico'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Solo vive en la isla de Cozumel y es más pequeño que el mapache común.',
+   retos:[
+    R(1,'Especie','Red de vida','El mapache pigmeo solo vive en Cozumel. ¿Por qué eso lo hace tan frágil?',
+      ['Porque si su hábitat se daña, no tiene otro lugar del mundo a dónde ir.','Porque es muy grande y necesita mucho espacio.','Porque en la isla no hay comida para nadie.'],
+      'Una especie endémica solo vive en un lugar. Si desaparece de ahí, desaparece del planeta.'),
+    R(2,'Perspectiva','Voces','Una empresa quiere construir un hotel en la selva donde vive el mapache y dice que dará empleos. Una bióloga pide cuidar su hogar. ¿Qué propuesta es mejor?',
+      ['Buscar un terreno que ya esté transformado y cuidar la selva donde vive el mapache.','Construir donde sea: lo importante son los empleos.','Prohibir cualquier construcción en toda la isla.'],
+      'Escuchar a las dos voces permite buscar una solución que cuide la selva y también dé trabajo.'),
+    R(3,'Responsabilidad','Mi compromiso','Vives en Cozumel y tu gato sale solo por las noches. ¿Qué decides?',
+      ['Lo mantengo en casa o bajo mi cuidado, y le pido a mi familia que lo esterilice.','Lo dejo libre: es su naturaleza.','Lo suelto en la selva.'],
+      'Los perros y gatos que andan sueltos cazan fauna silvestre. Cuidarlos y mantenerlos en casa protege a las especies de la isla.')
+   ]},
+ { n:'Rata canguro de San Quintín', sci:'Dipodomys gravipes', rg:'Costa de San Quintín, Baja California',
+   st:[['sta','UICN · Peligro crítico'],['tbd','NOM-059 · Por confirmar']],
+   dato:'Salta sobre sus patas traseras como un canguro. Se creyó extinta y reapareció en 2017.',
+   retos:[
+    R(1,'Función','Red de vida','La rata canguro come semillas y es alimento de búhos, serpientes y coyotes. ¿Qué papel tiene en su ecosistema?',
+      ['Ayuda a dispersar semillas y es alimento de otros animales.','No cumple ningún papel en el ecosistema.','Se come a los búhos para controlarlos.'],
+      'Cada especie cumple una función. En la cadena alimentaria es alimento de otros y, al guardar semillas, ayuda a que algunas plantas se rieguen por el suelo.'),
+    R(2,'Especie','La ley','En 2017 se volvió a ver a esta rata que se creía desaparecida. ¿Qué conclusión es la mejor?',
+      ['Hay que seguir estudiándola y cuidando su hábitat: que reaparezca no significa que esté a salvo.','Ya no necesita protección.','Seguramente nunca estuvo en peligro.'],
+      'La Lista Roja de la UICN la mantiene en peligro crítico. Haberla visto de nuevo es una oportunidad para protegerla antes de que sea tarde.'),
+    R(3,'Perspectiva','Voces','Quieren convertir en cultivo las dunas donde vive. ¿Qué decisión escucha a más personas?',
+      ['Pedir que antes se estudie el impacto y se escuche a agricultores, científicos y a la comunidad.','Que decidan solo los agricultores.','No escuchar a nadie y esperar a ver qué pasa.'],
+      'Antes de decidir conviene escuchar y conocer los efectos. Así se pueden buscar acuerdos que cuiden a la especie.')
+   ]},
+ { n:'Achoque', sci:'Ambystoma dumerilii', rg:'Lago de Pátzcuaro, Michoacán',
+   st:[['sta','UICN · Peligro crítico'],['tbd','NOM-059 · Por confirmar']],
+   dato:'Es pariente del ajolote: otra salamandra que conserva sus branquias.',
+   retos:[
+    R(1,'Especie','Red de vida','El achoque y el ajolote son parientes. ¿Qué tienen en común?',
+      ['Son salamandras que viven en el agua y conservan sus branquias toda la vida.','Los dos son peces de río.','Los dos viven en el desierto.'],
+      'Son anfibios del mismo género. Viven en lagos distintos: el ajolote en Xochimilco y el achoque en Pátzcuaro.'),
+    R(2,'Legislación','La ley','La NOM-059 usa categorías como «amenazada» o «en peligro de extinción». ¿Para qué sirve?',
+      ['Para decidir qué especies necesitan protección legal en México.','Para dar permisos de caza a todos.','Para ponerles nombres a las especies.'],
+      'La NOM-059-SEMARNAT es la lista oficial de especies en riesgo en México. Si una especie está en ella, la ley exige protegerla.'),
+    R(3,'Responsabilidad','Mi compromiso','El lago de Pátzcuaro recibe basura y aguas sucias. ¿Qué acción de tu comunidad ayuda más?',
+      ['No tirar basura ni detergentes cerca del lago y participar en jornadas de limpieza.','Tirar la basura en la orilla: el agua se la llevará.','Esperar a que alguien más lo resuelva.'],
+      'La contaminación daña al achoque y a todos los seres vivos del lago. Cada persona puede ayudar con acciones sencillas.')
+   ]},
+ { n:'Teporingo', sci:'Romerolagus diazi', rg:'Volcanes del centro de México',
+   st:[['sta','UICN · En peligro'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es uno de los conejos más pequeños del mundo y vive entre los zacatones.',
+   retos:[
+    R(1,'Interdependencia','Red de vida','El teporingo y el gorrión serrano viven en el mismo zacatonal. Un incendio quema el zacatón. ¿Qué pasa?',
+      ['Los dos pierden alimento y refugio, y también otros seres vivos que viven allí.','Solo se afecta el zacatón.','Los teporingos viven mejor sin pasto.'],
+      'Los seres vivos de un mismo lugar dependen unos de otros y del hábitat. Si se daña el zacatonal, se afecta toda la red.'),
+    R(2,'Legislación','La ley','Parte de su hábitat está en el Parque Nacional Izta-Popo. ¿Para qué sirve un parque nacional?',
+      ['Para proteger ecosistemas completos y las especies que viven en ellos, con reglas para quienes lo visitan.','Para construir ciudades.','Para vender madera sin control.'],
+      'Los parques nacionales son áreas naturales protegidas por ley. Tienen reglas para cuidar la naturaleza.'),
+    R(3,'Responsabilidad','Mi compromiso','Vas de excursión a los volcanes con tu familia. ¿Qué decisión cuida al teporingo?',
+      ['No hacer fogatas, seguir los senderos y llevarme mi basura.','Hacer una fogata para calentarnos.','Perseguir a los conejos para tomarles fotos.'],
+      'Los incendios y caminar fuera de los senderos destruyen el zacatonal, que es su casa.')
+   ]},
+ { n:'Perrito de la pradera', sci:'Cynomys mexicanus', rg:'Pastizales de Coahuila y San Luis Potosí',
+   st:[['sta','UICN · En peligro'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Vive en colonias con muchas madrigueras y avisa del peligro con ladridos.',
+   retos:[
+    R(1,'Función','Red de vida','Los perritos de la pradera cavan madrigueras donde se refugian otros animales. ¿Qué función cumplen?',
+      ['Hacen refugios para otros animales y ayudan a que el suelo se airee.','Contaminan el pastizal.','Solo comen carne y no ayudan a nadie.'],
+      'Sus madrigueras sirven a otras especies y remueven la tierra. Por eso se les considera «ingenieros» del pastizal.'),
+    R(2,'Perspectiva','Voces','Un ganadero dice que los perritos se comen el pasto. Una bióloga dice que son importantes para el pastizal. ¿Qué propuesta es mejor?',
+      ['Buscar formas de que el ganado y los perritos compartan el pastizal, con apoyo y reglas claras.','Envenenar a los perritos.','Quitarle el terreno al ganadero sin hablar con él.'],
+      'Envenenar daña a toda la red de vida. Escuchar a las dos partes ayuda a encontrar acuerdos.'),
+    R(3,'Responsabilidad','Mi compromiso','Un pastizal va a convertirse en campo de cultivo. ¿Qué puede hacer tu comunidad?',
+      ['Informarse, hablar con las autoridades y apoyar a organizaciones que cuidan los pastizales.','Nada: no se puede hacer nada.','Quemar el pastizal para que se vea limpio.'],
+      'Los pastizales también son hábitats. Informarse y participar es una forma de comprometerse.')
+   ]},
+ { n:'Tortuga bisagra', sci:'Terrapene coahuila', rg:'Valle de Cuatro Ciénegas, Coahuila',
+   st:[['sta','UICN · En peligro'],['nom','NOM-059 · En peligro de extinción'],['cit','CITES · Apéndice I']],
+   dato:'Puede cerrar su caparazón como una caja gracias a una «bisagra» en la parte de abajo.',
+   retos:[
+    R(1,'Interdependencia','Red de vida','En Cuatro Ciénegas hay pozas de agua en pleno desierto. ¿Qué pasa si una poza se seca?',
+      ['Pierden su hogar la tortuga y muchos seres que dependen del agua, como peces y plantas.','Solo se pierde agua.','Las tortugas se mudan sin problema.'],
+      'Las pozas son el centro de la vida del lugar. Si se secan, se rompe toda la red.'),
+    R(2,'Legislación','La ley','La tortuga bisagra está en la NOM-059 y en el Apéndice I de CITES. ¿Qué pueden lograr estas leyes?',
+      ['Prohibir su comercio y ayudar a proteger el lugar donde vive.','Convertirla en mascota legal.','Nada: son solo papeles.'],
+      'Las leyes y los acuerdos son herramientas: prohíben el comercio y obligan a cuidar su hábitat. Funcionan cuando las personas las cumplen.'),
+    R(3,'Responsabilidad','Mi compromiso','Encuentras una tortuga pequeña durante un paseo. ¿Qué haces?',
+      ['La dejo donde está, la observo sin molestarla y aviso a un guía si parece estar en peligro.','Me la llevo a casa.','La cambio a otro lugar que me parezca mejor.'],
+      'Moverla puede ponerla en peligro, y sacar a un animal silvestre de su hábitat está prohibido.')
+   ]},
+ { n:'Cotorra serrana oriental', sci:'Rhynchopsitta terrisi', rg:'Sierra Madre Oriental, noreste de México',
+   st:[['sta','UICN · En peligro'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es verde con la frente color granate; anida en acantilados y vuela en bandadas.',
+   retos:[
+    R(1,'Interdependencia','Red de vida','La cotorra se alimenta sobre todo de piñones y anida en acantilados. ¿Qué pasa si se talan los pinos?',
+      ['Se queda sin alimento y refugio, y hay menos cotorras.','Nada: se alimenta de cualquier cosa.','Hay más cotorras porque hay más espacio.'],
+      'La cotorra depende de los bosques de pino. Si el bosque desaparece, también ella.'),
+    R(2,'Especie','La ley','La cotorra serrana oriental solo vive de forma natural en México. ¿Qué significa que una especie sea endémica?',
+      ['Que solo vive en un lugar del mundo: si desaparece de ahí, se pierde para siempre.','Que vive en todo el planeta.','Que es muy común.'],
+      'Por eso México tiene una responsabilidad especial con sus especies endémicas: nadie más puede cuidarlas.'),
+    R(3,'Perspectiva','Voces','Una empresa quiere talar parte del bosque. Una comunidad prefiere cuidarlo y recibir turistas. ¿Qué es lo mejor?',
+      ['Buscar un acuerdo con aprovechamiento forestal responsable y turismo cuidadoso.','Talar todo: da dinero rápido.','Cerrar el bosque y que nadie entre, tampoco la comunidad.'],
+      'Escuchar a todos permite encontrar soluciones que cuiden al bosque y también den trabajo.')
+   ]},
+ { n:'Gorrión serrano', sci:'Xenospiza baileyi', rg:'Pastizales de alta montaña, centro de México y Durango',
+   st:[['tbd','UICN · Por confirmar'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es un ave pequeña que vive y anida entre pastos altos.',
+   retos:[
+    R(1,'Función','Red de vida','El gorrión serrano come semillas e insectos del zacatonal. ¿Qué función cumple?',
+      ['Se alimenta de insectos y semillas, y a su vez es alimento de otros animales.','Fabrica su alimento con la luz del sol.','Convierte los restos de otros seres vivos en nutrientes.'],
+      'Es un consumidor: ayuda a equilibrar la cantidad de insectos y forma parte de la cadena alimentaria.'),
+    R(2,'Legislación','La ley','¿Qué dice en general la Ley General de Vida Silvestre sobre las especies en riesgo?',
+      ['Obliga a protegerlas, regula su aprovechamiento y pone sanciones a quien las daña.','Permite coleccionarlas.','Solo habla de animales de granja.'],
+      'La Ley General de Vida Silvestre existe para conservar la vida silvestre de México y sanciona a quien la daña.'),
+    R(3,'Responsabilidad','Mi compromiso','Quieres ayudar desde tu escuela a proteger los pastizales de montaña. ¿Qué proyecto sirve más?',
+      ['Una campaña con carteles y charlas para que las familias conozcan al gorrión y cómo prevenir incendios.','Una fiesta en el pastizal con fuegos artificiales.','No hacer nada, porque es un ave muy pequeña.'],
+      'Informar a otras personas es una forma de actuar. Mientras más gente conoce a la especie, más gente la cuida.')
+   ]},
+ { n:'Tortuga del bolsón', sci:'Gopherus flavomarginatus', rg:'Bolsón de Mapimí, Chihuahua, Coahuila y Durango',
+   st:[['tbd','UICN · Por confirmar'],['nom','NOM-059 · En peligro de extinción']],
+   dato:'Es la tortuga terrestre más grande de Norteamérica y excava madrigueras profundas.',
+   retos:[
+    R(1,'Especie','Red de vida','La tortuga del bolsón vive en el desierto y cava madrigueras profundas. ¿Cómo le ayuda eso a sobrevivir?',
+      ['Se refugia del calor y del frío extremos, y otras especies también usan sus madrigueras.','Se esconde de la lluvia, porque en el desierto llueve todos los días.','No le ayuda: cava solo por juego.'],
+      'Sus patas fuertes le sirven para excavar. La madriguera la protege de las temperaturas extremas y también da refugio a otros seres vivos.'),
+    R(2,'Legislación','La ley','En el Bolsón de Mapimí hay una Reserva de la Biosfera. ¿Para qué sirve?',
+      ['Para cuidar la naturaleza de la zona y permitir solo actividades que no la dañen.','Para construir una gran ciudad.','Para que nadie sepa qué especies viven ahí.'],
+      'Las reservas de la biosfera protegen ecosistemas y a las personas que viven en ellos, y regulan lo que se puede hacer.'),
+    R(3,'Perspectiva','Voces','Supón que una familia de la zona cazaba tortugas por costumbre. ¿Qué ayuda a que se sume a cuidarlas?',
+      ['Explicar por qué son importantes, escuchar a la familia y ofrecer opciones de trabajo que cuiden el lugar.','Castigarla sin explicar nada.','Ignorarla y esperar.'],
+      'Escuchar y ofrecer alternativas funciona mejor que castigar sin explicar. Cuidar a una especie también es cuidar a las personas.')
+   ]}
+];
+
+
+/* =========================================================
+   LOGOS DEL COLEGIO
+   Los logos son archivos junto a este HTML (logo-crecer.png y logo-ib.png).
+   Si no se encuentran, se muestra el nombre del colegio en texto.
+   ========================================================= */
+const LOGOS = { crecer:'logo-crecer.png', ib:'logo-ib.png' };
+function logosHtml(h){
+  let t='';
+  t += LOGOS.crecer ? `<img class="logo" style="height:${h}px" src="${LOGOS.crecer}" alt="Logo de Centro Educativo Crecer" onerror="this.outerHTML='<span class=logo-txt>Centro Educativo<br>Crecer</span>'">` : `<span class="logo-txt">Centro Educativo<br>Crecer</span>`;
+  if(LOGOS.ib) t += `<img class="logo" style="height:${h}px" src="${LOGOS.ib}" alt="Logo del Bachillerato Internacional" onerror="this.remove()">`;
+  return t;
+}
+function fillLogos(){document.querySelectorAll('[data-logos]').forEach(el=>{el.innerHTML=logosHtml(+el.dataset.logos)})}
+
+/* =========================================================
+   FOTOGRAFÍAS (Wikimedia Commons, licencias libres). Mismo orden que DATA.
+   ========================================================= */
+const IMG = [
+ {f:'Axolotl_ganz.jpg', w0:2178, h:'0/00', a:'LoKiLeCh', l:'CC BY-SA 3.0', pos:'50% 50%'},
+ {f:'Vaquita2_Olson_NOAA.jpg', w0:860, h:'5/5e', a:'Paula Olson, NOAA', l:'Dominio público', pos:'50% 50%'},
+ {f:'Totoaba.jpg', w0:640, h:'a/a0', a:'Autor desconocido', l:'Dominio público', pos:'50% 50%'},
+ {f:'Cozumel_Raccoon2.jpg', w0:491, h:'6/64', a:'Camazine', l:'CC BY-SA 3.0', pos:'50% 40%'},
+ {f:'Dipodomys_gravipes_64346443_(cropped).jpg', w0:846, h:'3/3e', a:'hectormarquez', l:'CC0', pos:'50% 50%'},
+ {f:'MX._Achoque_o_ajolote_de_Pátzcuaro_-_Ambystoma_dumerilii_(3).jpg', w0:4032, h:'8/88', a:'Claude Humbert', l:'CC BY-SA 4.0', pos:'50% 50%'},
+ {f:'Romerolagus_diazi_-_Zoologico_de_Chapultepec,_Ciudad_de_México_-_Cropped2xAlt.png', w0:1122, h:'d/df', a:'ProtoplasmaKid', l:'CC BY-SA 4.0', pos:'50% 40%'},
+ {f:'Mexican_prairie_dog.jpg', w0:254, h:'9/98', a:'Cristinagil', l:'CC BY-SA 3.0', pos:'50% 30%'},
+ {f:'Terrapene_coahuila_at_the_Columbus_Zoo-2011_07_11_IMG_0667.JPG', w0:2305, h:'0/04', a:'Postdlf', l:'CC BY-SA 3.0', pos:'50% 42%'},
+ {f:'Maroon-fronted_Parrot_(Rhynchopsitta_terrisi)_01.jpg', w0:2048, h:'c/cf', a:'Adriana Nelly Correa Sandoval', l:'CC BY 4.0', pos:'50% 40%'},
+ {f:'Xenospiza_baileyi_202570677.jpg', w0:2048, h:'2/24', a:'Jose Hugo Martínez Guerrero', l:'CC BY-SA 4.0', pos:'50% 50%'},
+ {f:'Itzelbolson1small.jpg', w0:2304, h:'f/fb', a:'Mbtrap', l:'CC BY-SA 3.0', pos:'50% 50%'}
+];
+const STD=[250,330,500,960,1280];
+function photoUrl(i,w){
+  const m=IMG[i], e=encodeURIComponent(m.f), sz=STD.find(x=>x>=w)||960;
+  return m.w0<=sz ? `https://upload.wikimedia.org/wikipedia/commons/${m.h}/${e}`
+                  : `https://upload.wikimedia.org/wikipedia/commons/thumb/${m.h}/${e}/${sz}px-${e}`;
+}
+const altUrl=(i,w)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(IMG[i].f)+'?width='+w;
+const fileUrl=i=>'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(IMG[i].f.replace(/ /g,'_'));
+function imgErr(img){
+  if(!img.dataset.tried){img.dataset.tried='1';img.src=img.dataset.alt;return}
+  img.parentNode.classList.add('fail');img.remove();
+}
+function ph(i,w,cls){
+  return `<span class="ph ${cls||''}"><img src="${photoUrl(i,w)}" data-alt="${altUrl(i,w)}" alt="Fotografía de ${DATA[i].n}" decoding="async" referrerpolicy="no-referrer" style="object-position:${IMG[i].pos}" onerror="imgErr(this)"></span>`;
+}
+
+/* =========================================================
+   ESTADO (solo en memoria; no se usa localStorage)
+   ========================================================= */
+const S = { name:'', res:Array(12).fill(null), reflect:{}, cur:null, pts:0 };
+const $ = s=>document.querySelector(s);
+const screens = ['s-start','s-map','s-station','s-reflect','s-log'];
+function show(id){
+  screens.forEach(s=>$('#'+s).classList.toggle('active',s===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  const hud = id!=='s-start';
+  $('#hud').hidden=!hud; $('#bar').hidden=!hud;
+}
+function totalPts(){return S.res.reduce((a,r)=>a+(r?r.pts.reduce((x,y)=>x+y,0):0),0)}
+function sellos(){return S.res.filter(Boolean).length}
+function animateNum(el,from,to){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce||from===to){el.textContent=to;return}
+  const t0=performance.now(),d=700;
+  (function f(t){const p=Math.min(1,(t-t0)/d);el.textContent=Math.round(from+(to-from)*p);if(p<1)requestAnimationFrame(f)})(t0);
+}
+let lastPts=0;
+function updateHud(){
+  $('#hudSellos').textContent=sellos();
+  const p=totalPts(); animateNum($('#hudPts'),lastPts,p); lastPts=p;
+  $('#barFill').style.width=(sellos()/12*100)+'%';
+}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function burst(el){
+  const r=el.getBoundingClientRect(), host=el.closest('.book')||document.body, hr=host.getBoundingClientRect();
+  const b=document.createElement('div'); b.className='burst';
+  b.style.left=(r.left-hr.left+r.width/2)+'px'; b.style.top=(r.top-hr.top+r.height/2)+'px';
+  const cols=['#F2B134','#C8431D','#3C7A4B','#2E7C86','#F6F1E3'];
+  for(let i=0;i<16;i++){
+    const s=document.createElement('i'),a=Math.random()*Math.PI*2,d=50+Math.random()*80;
+    s.style.background=cols[i%cols.length];
+    s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d+'px');s.style.setProperty('--r',(Math.random()*540-270)+'deg');
+    b.appendChild(s);
+  }
+  host.appendChild(b); setTimeout(()=>b.remove(),1000);
+}
+
+/* ---------- INICIO ---------- */
+$('#nombre').addEventListener('input',e=>{$('#btnStart').disabled=e.target.value.trim().length<2});
+$('#btnStart').addEventListener('click',()=>{S.name=$('#nombre').value.trim();renderMap();show('s-map');updateHud()});
+
+/* ---------- MAPA ---------- */
+function renderMap(){
+  const g=$('#mapGrid'); g.innerHTML='';
+  DATA.forEach((d,i)=>{
+    const done=S.res[i];
+    const b=document.createElement('button'); b.className='station'+(done?' done':'');
+    b.innerHTML=ph(i,160)+`<span class="txt"><span class="no">ESTACIÓN ${String(i+1).padStart(2,'0')}</span><span class="nm">${esc(d.n)}</span><span class="rg">${esc(d.rg)}</span></span>`+
+      (done?`<span class="mini">SELLO<br>${String(i+1).padStart(2,'0')}</span>`:'');
+    b.addEventListener('click',()=>openStation(i));
+    g.appendChild(b);
+  });
+  const a=$('#mapActions'); a.innerHTML='';
+  if(sellos()===12){
+    const b=document.createElement('button');b.className='btn';b.textContent='Pasaporte completo: escribir mi reflexión';b.addEventListener('click',()=>show('s-reflect'));a.appendChild(b);
+  }else if(sellos()>0){
+    const b=document.createElement('button');b.className='btn ghost';b.textContent='Ver mi bitácora parcial';b.addEventListener('click',()=>{buildLog(false);show('s-log')});a.appendChild(b);
+  }
+}
+
+/* ---------- ESTACIÓN ---------- */
+function openStation(i){
+  if(S.res[i]){ // ya visitada: repasar expediente
+    S.cur={i,r:-1,pts:S.res[i].pts.slice(),note:S.res[i].note,review:true};
+  }else{
+    S.cur={i,r:-1,pts:[],note:'',review:false};
+  }
+  renderIntro(); show('s-station');
+}
+function chipsHtml(d){return d.st.map(([k,t])=>`<span class="chip ${k}">${esc(t)}</span>`).join('')}
+function renderIntro(){
+  const {i,review}=S.cur,d=DATA[i];
+  $('#stationBody').innerHTML=`
+    <div class="stack stagger">
+      <div class="kicker">Estación ${String(i+1).padStart(2,'0')} de 12</div>
+      <h2>${esc(d.n)}</h2>
+      <div class="intro-grid">
+        <figure class="fig">${ph(i,800,'big')}<figcaption>Foto: ${esc(IMG[i].a)} · ${esc(IMG[i].l)} · <a href="${fileUrl(i)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>
+        <div class="card stack" style="gap:10px">
+          <p><i>${esc(d.sci)}</i></p>
+          <p><b>Dónde vive:</b> ${esc(d.rg)}</p>
+          <div class="chips">${chipsHtml(d)}</div>
+          <p>${esc(d.dato)}</p>
+        </div>
+      </div>
+      <p>${review?'Ya ganaste el sello de esta estación.':'Te esperan 3 retos: uno por cada línea de indagación. Lee con calma y decide.'}</p>
+      <div class="row">
+        ${review?'':'<button class="btn" id="goRetos">Empezar los retos</button>'}
+        <button class="btn ghost" id="backMap">Volver al mapa</button>
+      </div>
+    </div>`;
+  const go=$('#goRetos'); if(go) go.addEventListener('click',()=>{S.cur.r=0;renderReto()});
+  $('#backMap').addEventListener('click',()=>{renderMap();show('s-map')});
+}
+function renderReto(){
+  const {i,r}=S.cur,d=DATA[i],t=d.retos[r];
+  const order=shuffle([0,1,2]); S.cur.tries=0; S.cur.done=false;
+  const L=LINEAS[t.l];
+  $('#stationBody').innerHTML=`
+    <div class="row" style="justify-content:space-between">
+      <div class="row" style="gap:10px;flex-wrap:nowrap">${ph(i,160,'sm')}<div class="kicker">${esc(d.n)} · Reto ${r+1} de 3</div></div>
+      <div class="dots" aria-label="Progreso">${[0,1,2].map(k=>`<i class="${k<r?'on':k===r?'cur':''}"></i>`).join('')}</div>
+    </div>
+    <div class="chips"><span class="chip l${t.l}">${L.n} · ${esc(L.t)}</span><span class="chip c">${esc(t.c)}</span><span class="chip c" style="border-style:dashed">${esc(t.t)}</span></div>
+    <div class="q">${esc(t.q)}</div>
+    <div class="opts stagger" id="opts"></div>
+    <div id="fbBox" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="nextBtn" hidden>${r<2?'Siguiente reto':'Terminar estación'}</button></div>`;
+  const box=$('#opts');
+  order.forEach((idx,pos)=>{
+    const b=document.createElement('button'); b.className='opt'; b.dataset.idx=idx;
+    b.innerHTML=`<span class="ltr">${'ABC'[pos]}</span><span>${esc(t.o[idx])}</span>`;
+    b.addEventListener('click',()=>choose(b,idx));
+    box.appendChild(b);
+  });
+  $('#nextBtn').addEventListener('click',()=>{
+    if(S.cur.r<2){S.cur.r++;renderReto()}else{renderNote()}
+  });
+}
+function choose(btn,idx){
+  if(S.cur.done) return;
+  const {i,r}=S.cur,t=DATA[i].retos[r],fb=$('#fbBox');
+  const all=[...document.querySelectorAll('#opts .opt')];
+  if(idx===0){
+    S.cur.done=true; const p=S.cur.tries===0?2:1; S.cur.pts[r]=p;
+    all.forEach(o=>{o.disabled=true; if(o!==btn)o.classList.add('dim')});
+    btn.classList.add('ok'); burst(btn);
+    fb.innerHTML=`<div class="fb good"><b>${p===2?'¡Muy bien! +2 puntos':'¡Lo lograste! +1 punto'}</b><br>${esc(t.e)}</div>`;
+    $('#nextBtn').hidden=false; $('#nextBtn').focus({preventScroll:true});
+  }else{
+    S.cur.tries++; btn.classList.add('bad'); btn.disabled=true;
+    if(S.cur.tries===1){
+      fb.innerHTML=`<div class="fb hint"><b>Casi.</b> Lee otra vez el reto, piensa en cómo se conectan los seres vivos y prueba con otra opción.</div>`;
+    }else{
+      S.cur.done=true; S.cur.pts[r]=0;
+      all.forEach(o=>{o.disabled=true; if(+o.dataset.idx===0){o.classList.add('ok')}else if(!o.classList.contains('bad')){o.classList.add('dim')}});
+      fb.innerHTML=`<div class="fb nope"><b>Esta era la respuesta.</b><br>${esc(t.e)}</div>`;
+      $('#nextBtn').hidden=false; $('#nextBtn').focus({preventScroll:true});
+    }
+  }
+}
+function renderNote(){
+  const {i}=S.cur,d=DATA[i];
+  $('#stationBody').innerHTML=`
+    <div class="stack stagger">
+      <div class="kicker">${esc(d.n)} · Último paso</div>
+      <h2>Lo que me llevo de este animal</h2>
+      <p>Escribe una idea que quieras recordar de ${esc(d.n)}. Es opcional, pero ayuda mucho a tu bitácora.</p>
+      <div class="field"><label for="note">Mi idea</label><textarea id="note" placeholder="Por ejemplo: aprendí que…"></textarea></div>
+      <div class="row"><button class="btn" id="stampBtn">Estampar mi sello</button></div>
+    </div>`;
+  $('#stampBtn').addEventListener('click',()=>{
+    S.cur.note=$('#note').value.trim();
+    S.res[i]={pts:S.cur.pts.slice(),note:S.cur.note};
+    showStamp(i);
+  });
+}
+function starsFor(p){return p>=5?'★★★':p>=3?'★★☆':'★☆☆'}
+function showStamp(i){
+  const d=DATA[i],p=S.res[i].pts.reduce((a,b)=>a+b,0),ov=$('#overlay');
+  ov.innerHTML=`
+    <div class="paperbit">${ph(i,300,'pol')}<div class="bigstamp"><div class="t">Sello de viaje · ${String(i+1).padStart(2,'0')}/12</div><div class="n">${esc(d.n)}</div><div class="r">${esc(d.rg)}</div><div class="s">${starsFor(p)}</div></div></div>
+    <div class="ovtxt">+${p} puntos en esta estación</div>
+    <button class="btn" id="ovBtn">${sellos()===12?'¡Pasaporte completo!':'Volver al mapa'}</button>`;
+  ov.classList.add('on'); updateHud();
+  $('#ovBtn').addEventListener('click',()=>{ov.classList.remove('on');renderMap();show('s-map');if(sellos()===12)burst($('#mapGrid'))});
+  setTimeout(()=>{const f=$('#ovBtn');if(f)f.focus({preventScroll:true})},900);
+}
+
+/* ---------- REFLEXIÓN ---------- */
+['r1','r2','r3'].forEach(id=>$('#'+id).addEventListener('input',checkReflect));
+function checkReflect(){$('#btnLog').disabled=!['r1','r2','r3'].every(id=>$('#'+id).value.trim().length>=8)}
+$('#btnLog').addEventListener('click',()=>{
+  S.reflect={r1:$('#r1').value.trim(),r2:$('#r2').value.trim(),r3:$('#r3').value.trim(),r4:$('#r4').value.trim()};
+  buildLog(true); show('s-log');
+});
+
+/* ---------- BITÁCORA ---------- */
+function buildLog(full){
+  const body=$('#logBody'); body.innerHTML='';
+  const fecha=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+  const perLine={1:0,2:0,3:0},maxLine={1:0,2:0,3:0},perC={},maxC={};
+  CONCEPTOS.forEach(c=>{perC[c.n]=0;maxC[c.n]=0});
+  DATA.forEach((d,i)=>d.retos.forEach((t,k)=>{
+    maxLine[t.l]+=2; maxC[t.c]+=2;
+    const rs=S.res[i]; if(rs&&rs.pts[k]!=null){perLine[t.l]+=rs.pts[k];perC[t.c]+=rs.pts[k]}
+  }));
+  const total=totalPts(),maxT=72;
+  const cols={1:'var(--l1)',2:'var(--l2)',3:'var(--l3)'};
+  const h=document.createElement('div');
+  h.innerHTML=`
+    <div class="logos" style="margin-bottom:14px">${logosHtml(52)}</div>
+    <div class="kicker">Bitácora de viaje</div>
+    <h2>${esc(S.name)}</h2>
+    <p>Fecha: ${esc(fecha)} · Sellos: ${sellos()} de 12 · Puntos: ${total} de ${maxT}${full?'':' (bitácora parcial)'}</p>`;
+  body.appendChild(h);
+
+  const sg=document.createElement('div'); sg.innerHTML='<h3 style="margin-bottom:10px">Mis puntos por línea de indagación</h3>';
+  const g=document.createElement('div'); g.className='score-grid';
+  [1,2,3].forEach(l=>{
+    g.insertAdjacentHTML('beforeend',`<div class="scorebox"><div class="kicker" style="color:${cols[l]}">${LINEAS[l].n}</div><div style="font-weight:700;font-size:15px;min-height:40px">${esc(LINEAS[l].t)}</div><div class="big">${perLine[l]}<span style="font-size:18px;color:var(--soft)"> / ${maxLine[l]}</span></div><div class="meter"><i style="width:${perLine[l]/maxLine[l]*100}%;background:${cols[l]}"></i></div></div>`);
+  });
+  sg.appendChild(g); body.appendChild(sg);
+
+  const cg=document.createElement('div');
+  cg.innerHTML='<h3 style="margin-bottom:10px">Mis puntos por concepto</h3>';
+  let tb='<table class="t"><tr><th>Concepto</th><th>Tipo</th><th>Puntos</th></tr>';
+  CONCEPTOS.forEach(c=>{tb+=`<tr><td><b>${c.n}</b></td><td>${c.k}</td><td>${perC[c.n]} / ${maxC[c.n]}</td></tr>`});
+  cg.insertAdjacentHTML('beforeend',tb+'</table>'); body.appendChild(cg);
+
+  const st=document.createElement('div');
+  st.innerHTML='<h3 style="margin-bottom:10px">Mis sellos</h3>';
+  let t2='<table class="t"><tr><th>Estación</th><th>L1</th><th>L2</th><th>L3</th><th>Lo que me llevo</th></tr>';
+  DATA.forEach((d,i)=>{
+    const r=S.res[i];
+    t2+=`<tr><td><span class="tn">${ph(i,120,'xs')}<b>${String(i+1).padStart(2,'0')} · ${esc(d.n)}</b></span></td>${r?r.pts.map(p=>`<td>${p}</td>`).join(''):'<td>–</td><td>–</td><td>–</td>'}<td data-note="${i}"></td></tr>`;
+  });
+  st.insertAdjacentHTML('beforeend',t2+'</table>'); body.appendChild(st);
+  st.querySelectorAll('[data-note]').forEach(td=>{const r=S.res[+td.dataset.note];td.textContent=r&&r.note?r.note:''});
+
+  if(full){
+    const rf=document.createElement('div'); rf.className='stack'; rf.innerHTML='<h3>Mi reflexión</h3>';
+    [['Antes yo pensaba que…',S.reflect.r1],['Ahora pienso que…',S.reflect.r2],['Mi compromiso para cuidar a los seres vivos es…',S.reflect.r3],['Una pregunta que todavía me da curiosidad',S.reflect.r4]].forEach(([l,v])=>{
+      if(!v) return; const a=document.createElement('div'); a.className='ans'; const s=document.createElement('small'); s.textContent=l; const tx=document.createElement('span'); tx.textContent=v; a.append(s,tx); rf.appendChild(a);
+    });
+    body.appendChild(rf);
+  }
+  const cr=document.createElement('div'); cr.className='credits';
+  cr.innerHTML='<h3 style="margin-bottom:8px">Créditos de las fotografías</h3>'+DATA.map((d,i)=>`<div>${esc(d.n)}: ${esc(IMG[i].a)} · ${esc(IMG[i].l)} · Wikimedia Commons</div>`).join('');
+  body.appendChild(cr);
+  const act=document.createElement('div'); act.className='row no-print';
+  act.innerHTML='<button class="btn" id="btnPrint">Guardar o imprimir (PDF)</button><button class="btn ghost" id="btnBackMap">Volver al mapa</button><button class="btn ghost" id="btnReset">Empezar de nuevo</button>';
+  body.appendChild(act);
+  $('#btnPrint').addEventListener('click',()=>window.print());
+  $('#btnBackMap').addEventListener('click',()=>{renderMap();show('s-map')});
+  $('#btnReset').addEventListener('click',()=>{
+    if(!confirm('¿Seguro? Se borrará todo tu avance. Guarda tu PDF antes.')) return;
+    S.name='';S.res=Array(12).fill(null);S.reflect={};lastPts=0;['r1','r2','r3','r4','nombre'].forEach(id=>$('#'+id).value='');
+    $('#btnStart').disabled=true;$('#btnLog').disabled=true;show('s-start');
+  });
+}
+
+/* ---------- INICIALIZACIÓN ---------- */
+fillLogos();
+$('#strip').innerHTML=DATA.map((d,i)=>ph(i,160)).join('');
+[[ 'orb1',0 ],['orb2',1],['orb3',4],['orb4',9]].forEach(([id,i])=>{const el=$('#'+id);el.innerHTML=ph(i,200);el.firstChild.style.cssText='width:100%;height:100%;border-radius:50%'});
+</script>
+</body>
+</html>
