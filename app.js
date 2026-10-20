@@ -100,7 +100,7 @@ function totalEsp(){let h=0,t=0;MODULOS_ESP.forEach(m=>{const r=resumenMod(m);h+
 function vMaterias(){
   const r=totalMate(),re=totalEsp();
   return `${top(`<span class="chip-user">${esc(S.nombre)}</span> <button class="btn sec chico" id="salir">Salir</button>`,true)}
-  <h1>¡Hola, ${esc(S.nombre)}!</h1><p class="sub-h">¿Qué quieres practicar hoy?</p>
+  <h1>¡Hola, ${esc(S.nombre)}!</h1><p class="sub-h">¿Qué quieres practicar hoy? <span class="frase-hoy">${esc(S.fraseHoy||(S.fraseHoy=window.FX.frase('hola')))}</span></p>
   <div class="materias">
    <button class="materia mate" data-materia="mate"><div class="simb"><span>+</span><span>−</span><span>×</span><span>÷</span></div>
      <div class="mt">Matemáticas</div><div class="ms">Tablas y operaciones</div>
@@ -146,7 +146,8 @@ function vNiveles(){
   return `${top(`<button class="btn sec chico" id="home">${m.esp?'← Español':'← Inicio'}</button>`)}
   <h1>${esc(m.titulo)}</h1>${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Completa cada nivel para abrir el siguiente.</p>`:`<p>Pasa cada nivel con ${CFG.UMBRAL} aciertos de ${CFG.TOTAL} para abrir el siguiente.</p>`}
   <div class="niveles">${m.niveles.map(l=>{const p=pr(m.id,l.n);const ab=abierto(m.id,l.n);const h=hecho(m.id,l.n);
-    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${p?`Mejor: ${p.mejor} de ${p.total||CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior')}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
+    const nuevo=S.recien&&S.recien.m===m.id&&S.recien.n===l.n;
+    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'} ${nuevo?'nuevo':''}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${p?`Mejor: ${p.mejor} de ${p.total||CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior')}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
 }
 function vIntro(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
@@ -167,17 +168,19 @@ function vis(p){
 function vJuego(){
   const j=S.j,p=j.preguntas[j.i];
   const resp=j.respuesta===''?'?':esc(j.respuesta);
-  const cls=j.estado==='bien'?'bien':(j.estado==='casi'?'casi':'');
+  const cls=(j.estado==='bien'?'bien':(j.estado==='casi'?'casi':''))+(j.anim==='bien'?' a-bien':(j.anim==='mal'?' a-mal':''));
+  const pp=j.anim?' pop':'';
   let msg='';
-  if(j.estado==='bien')msg=`<div class="msg bien pop">¡Muy bien! 🎉</div>`;
-  else if(j.estado==='casi')msg=`<div class="msg casi pop">Casi… mira la pista y prueba otra vez 💪</div>`;
-  else if(j.estado==='mostrar')msg=`<div class="msg casi pop">La respuesta es <b>${window.fmtNum(p.resp)}</b>. ¡Sigue, tú puedes!</div>`;
-  else msg='<div class="msg">&nbsp;</div>';
+  if(j.estado==='bien')msg=`<div class="msg bien${pp}">${esc(j.frase)} 🎉</div>`;
+  else if(j.estado==='casi')msg=`<div class="msg casi${pp}">${esc(j.frase)}</div>`;
+  else if(j.estado==='mostrar')msg=`<div class="msg casi${pp}">La respuesta es <b>${window.fmtNum(p.resp)}</b>. ${esc(j.frase)}</div>`;
+  else msg=`<div class="msg">${j.i===0&&j.intento===1&&j.respuesta===''&&j.fraseIni?esc(j.fraseIni):'&nbsp;'}</div>`;
+  const hasta=(j.i+((j.estado==='bien'||j.estado==='mostrar')?1:0))/j.preguntas.length*100,desde=j.pw==null?0:j.pw;j.pw=hasta;
   const mostrarPista=j.pista||j.estado==='casi'||j.estado==='mostrar';
   return `${top(`<button class="btn sec chico" id="abandonar">✕ Salir</button>`)}
-  <div class="ver" style="text-align:center">Pregunta ${j.i+1} de ${j.preguntas.length}</div>
-  <div class="prog"><i style="width:${(j.i)/j.preguntas.length*100}%"></i></div>
-  <div class="q-box">${vis(p)}</div>
+  <div class="ver marcador"><span>Pregunta ${j.i+1} de ${j.preguntas.length}</span><span class="chip-m">⭐ ${j.aciertos}</span>${j.racha>=2?`<span class="chip-m fuego ${j.anim==='bien'?'bump':''}">🔥 ×${j.racha}</span>`:''}</div>
+  <div class="prog run"><i data-from="${desde}" data-to="${hasta}" style="width:${desde}%"></i></div>
+  <div class="q-box ${j.anim==='nueva'?'desliza':''}">${vis(p)}</div>
   <div class="respuesta ${j.respuesta===''?'vacio':''} ${cls}" id="resp">${resp}</div>
   ${msg}
   ${mostrarPista?`<div class="pista">💡 ${esc(p.pista)}</div>`:''}
@@ -209,17 +212,22 @@ function prepararQ(){
 }
 function empezarEsp(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
-  S.noGuardado=false;S.je={qs:l.preguntas,i:0,aciertos:0,detalle:[]};
-  prepararQ();S.pantalla='juegoesp';render();
+  S.noGuardado=false;S.je={qs:l.preguntas,i:0,aciertos:0,detalle:[],racha:0,pw:0,anim:'nueva'};
+  prepararQ();S.pantalla='juegoesp';render();S.je.anim=null;
 }
 function finQ(ok,dado,msg){
   const j=S.je,q=j.qs[j.i];
   if(ok)j.aciertos++;
   j.detalle.push({q:descQ(q),c:corrQ(q),d:String(dado??''),ok});
-  j.fase='fin';j.ok=ok;j.msg=msg;render();
+  j.racha=ok?(j.racha||0)+1:0;
+  j.fase='fin';j.ok=ok;j.msg=msg+(ok?'':`<span class="frase-animo">${window.FX.frase('mostrar')}</span>`);
+  j.anim=ok?'bien':'mal';render();j.anim=null;
+  const F=window.FX;F.sonido(ok?(j.racha>=3?'racha':'bien'):'mal');
+  if(ok){const c=F.centro('.fb');F.confeti({n:j.racha>=3?80:30,x:c.x,y:c.y-60,fuerza:j.racha>=3?13:9});F.flotar(j.racha>=3?'🔥 ×'+j.racha:'+1 ⭐',$app.querySelector('.fb'));}else F.vibrar(100);
 }
 function vJuegoEsp(){
   const j=S.je,q=j.qs[j.i],fin=j.fase==='fin';let c='';
+  const hastaE=(j.i+(fin?1:0))/j.qs.length*100,desdeE=j.pw==null?0:j.pw;j.pw=hastaE;
   const instr=t=>`<div class="q-instr">${esc(t)}</div>`;
   if(q.tipo==='choice'||q.tipo==='fill'){
     c=instr(q.pregunta||q.instr)+(q.palabra&&q.palabra!=='?'?`<div class="q-word">${esc(q.palabra)}</div>`:'')+
@@ -227,7 +235,7 @@ function vJuegoEsp(){
   }else if(q.tipo==='classify'){
     c=instr(q.instr.replace(/^Arrastra/,'Lleva'))+`<div class="ayuda">Toca una palabra y luego toca su caja</div>
       <div class="pool">${j.orden.filter(i=>!j.colocadas.includes(i)).map(i=>`<button class="chip ${j.sel1===i?'sel':''}" data-f="${i}">${esc(q.fichas[i].w)}</button>`).join('')}</div>
-      <div class="bins">${q.cajas.map((cj,b)=>`<button class="bin" data-b="${b}"><h4>${esc(cj)}</h4>${j.colocadas.filter(i=>q.fichas[i].caja===b).map(i=>`<span class="in">${esc(q.fichas[i].w)}</span>`).join('')}</button>`).join('')}</div>`;
+      <div class="bins ${j.anim==='mal'?'a-mal':''}">${q.cajas.map((cj,b)=>`<button class="bin" data-b="${b}"><h4>${esc(cj)}</h4>${j.colocadas.filter(i=>q.fichas[i].caja===b).map(i=>`<span class="in">${esc(q.fichas[i].w)}</span>`).join('')}</button>`).join('')}</div>`;
   }else if(q.tipo==='correct'){
     const errs=new Set(q.errores.map(normE));
     c=instr(q.instr)+`<div class="ayuda">Toca las palabras que están mal</div><div class="frase">${q.frase.split(' ').map((w,i)=>{
@@ -242,16 +250,16 @@ function vJuegoEsp(){
     c=instr(q.instr)+`<div class="chk-list">${(q.items||[]).map((it,i)=>`<button class="chk ${j.sel.includes(i)?'on':''}" data-i="${i}" ${fin?'disabled':''}><span class="box">✓</span><span>${esc(it)}</span></button>`).join('')}</div>`+(fin?'':`<div class="fila-acc"><button class="btn" id="revisar">Terminar</button></div>`);
   }
   return `${top(`<button class="btn sec chico" id="abandonar">✕ Salir</button>`)}
-  <div class="ver" style="text-align:center">Ejercicio ${j.i+1} de ${j.qs.length}</div>
-  <div class="prog"><i style="width:${j.i/j.qs.length*100}%"></i></div>
-  <div class="q-box esp">${c}</div>
-  <div class="fb ${j.ok===true?'ok':(j.ok===false?'no':'')}">${j.msg||'&nbsp;'}</div>
+  <div class="ver marcador"><span>Ejercicio ${j.i+1} de ${j.qs.length}</span><span class="chip-m">⭐ ${j.aciertos}</span>${j.racha>=2?`<span class="chip-m fuego ${j.anim==='bien'?'bump':''}">🔥 ×${j.racha}</span>`:''}</div>
+  <div class="prog run"><i data-from="${desdeE}" data-to="${hastaE}" style="width:${desdeE}%"></i></div>
+  <div class="q-box esp ${j.anim==='nueva'?'desliza':''}">${c}</div>
+  <div class="fb ${j.ok===true?'ok':(j.ok===false?'no':'')} ${j.anim&&j.fase==='fin'?'pop':''}">${j.msg||'&nbsp;'}</div>
   ${fin?`<div class="fila-acc"><button class="btn" id="sigesp">${j.i+1>=j.qs.length?'Terminar ✓':'Siguiente →'}</button></div>`:''}`;
 }
 function bindEsp(){
   const j=S.je,q=j.qs[j.i];
   on('#abandonar',()=>{if(confirm('¿Quieres salir? Este intento no se guardará.')){S.pantalla='niveles';render();}});
-  on('#sigesp',()=>{j.i++;if(j.i>=j.qs.length){terminarEsp();return;}prepararQ();render();});
+  on('#sigesp',()=>{j.i++;if(j.i>=j.qs.length){terminarEsp();return;}prepararQ();j.anim='nueva';render();j.anim=null;});
   if(j.fase==='fin')return;
   if(q.tipo==='choice'||q.tipo==='fill'){
     $app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.op);j.elegida=i;const ok=i===q.correcta;
@@ -263,8 +271,8 @@ function bindEsp(){
       if(q.fichas[j.sel1].caja===Number(b.dataset.b)){
         j.colocadas.push(j.sel1);j.sel1=null;j.ok=null;
         if(j.colocadas.length===q.fichas.length){finQ(!j.fallo,j.fallo?'con errores':'bien',j.fallo?'¡Terminaste de clasificar! 🎉':'¡Clasificaste todas! 🎉');}
-        else{j.msg='¡Bien!';render();}
-      }else{j.fallo=true;j.msg='Esa va en la otra caja, inténtalo otra vez';j.ok=null;j.sel1=null;render();}
+        else{j.msg='¡Bien!';render();window.FX.sonido('bien');}
+      }else{j.fallo=true;j.msg='Esa va en la otra caja. '+window.FX.frase('casi').replace(/ 💪/,'');j.ok=null;j.sel1=null;j.anim='mal';render();j.anim=null;window.FX.sonido('mal');window.FX.vibrar(80);}
     });
   }else if(q.tipo==='correct'){
     $app.querySelectorAll('.pal').forEach(el=>el.onclick=()=>{const i=Number(el.dataset.i);j.sel=j.sel.includes(i)?j.sel.filter(x=>x!==i):[...j.sel,i];render();});
@@ -293,7 +301,7 @@ async function terminarEsp(){
   const k=key(S.mod,S.niv),a=S.prog[k]||{modulo:S.mod,nivel:S.niv,completado:false,estrellas:0,mejor:0,intentos:0};
   S.prog[k]={...a,completado:true,estrellas:Math.max(a.estrellas,est),mejor:Math.max(a.mejor,j.aciertos),intentos:a.intentos+1,total};
   const args={p_modulo:S.mod,p_nivel:S.niv,p_aciertos:j.aciertos,p_total:total,p_detalle:j.detalle};
-  S.pantalla='resultado';render();
+  S.pantalla='resultado';render();celebrar(true,est);
   try{await rpc('guardar_intento',{p_token:S.token,...args});}
   catch(e){
     if(/sesion_invalida/.test(e.message)){sesionCaida();return;}
@@ -304,12 +312,14 @@ function vResultado(){
   const j=S.j,m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);const esp=!!j.esp;const pasa=esp?true:j.aciertos>=CFG.UMBRAL;
   const est=esp?j.est:(!pasa?0:(j.aciertos>=10?3:(j.aciertos===9?2:1)));
   const fallos=j.detalle.filter(d=>!d.ok);
+  if(S.resKey!==j){S.resKey=j;S.fraseRes=window.FX.frase(esp?'esp':(!pasa?'noPasa':(est===3?'pasa3':'pasa')));}
   const haySig=m.niveles.some(x=>x.n===S.niv+1);
   return `${top('')}
   <div class="res-gde">${pasa?'🎉':'💪'}</div>
   <h1 style="text-align:center">${esp?(est===3?'¡Excelente!':est===2?'¡Bien hecho!':'¡Terminaste!'):(pasa?'¡Lo lograste!':'¡Casi lo logras!')}</h1>
   <p style="text-align:center;font-size:22px">${j.aciertos} de ${esp?j.total:CFG.TOTAL} bien${esp?'':' a la primera'}</p>
-  ${pasa?`<div class="res-est">${'★'.repeat(est)}${'☆'.repeat(3-est)}</div>`:`<p style="text-align:center">Con otra práctica lo logras. Los números van a cambiar.</p>`}
+  ${pasa?`<div class="res-est">${[0,1,2].map(i=>`<span class="e ${i<est?'on':'off'}" style="--i:${i}">★</span>`).join('')}</div>`:''}
+  <div class="res-msg">${esc(S.fraseRes||'')}</div>
   ${fallos.length?`<h2>Para repasar</h2>${fallos.map(f=>esp?`<div class="fall">${esc(f.q)}<br><b>Respuesta: ${esc(f.c||'—')}</b></div>`:`<div class="fall">${esc(f.q.replace('?',f.c).replace('□',f.c))}${/[+−×÷]/.test(f.q)&&!/[=]/.test(f.q)?' = '+esc(f.c):''}</div>`).join('')}`:''}
   <div class="fila-acc" style="margin-top:16px">
    ${pasa&&haySig?`<button class="btn ok" id="siguiente">Siguiente nivel →</button>`:''}
@@ -384,7 +394,11 @@ function vProfeDetalle(){
 function render(){
   const p=S.pantalla;
   const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
+  const cambio=S.ultPantalla!==p;S.ultPantalla=p;
+  $app.className=cambio?'nueva':'';
   $app.innerHTML=v()+((p==='juego'||p==='juegoesp')?'':pie());bind();
+  window.FX.post($app);
+  if(cambio){window.scrollTo(0,0);if(p==='niveles'&&S.recien){window.FX.sonido('abrir');}S.recien=null;}
 }
 const on=(sel,fn)=>{const e=$app.querySelector(sel);if(e)e.addEventListener('click',fn);return e;};
 function bind(){
@@ -513,8 +527,8 @@ function empezar(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
   if(m.esp){empezarEsp();return;}
   S.noGuardado=false;
-  S.j={punto:!!m.punto,preguntas:l.gen(),i:0,intento:1,aciertos:0,detalle:[],respuesta:'',estado:'esperando',pista:false,primera:null};
-  S.pantalla='juego';render();
+  S.j={punto:!!m.punto,preguntas:l.gen(),i:0,intento:1,aciertos:0,racha:0,detalle:[],respuesta:'',estado:'esperando',pista:false,primera:null,anim:'nueva',fraseIni:window.FX.frase('inicio')};
+  S.pantalla='juego';render();S.j.anim=null;
 }
 function teclaJ(k){
   const j=S.j;if(j.estado==='bien'||j.estado==='mostrar')return;
@@ -529,12 +543,22 @@ function comprobar(){
   if(ok){
     j.detalle.push({q:p.q,c:window.fmtNum(p.resp),d:j.primera??j.respuesta,ok:j.intento===1});
     if(j.intento===1)j.aciertos++;
-    j.estado='bien';render();setTimeout(siguiente,850);
+    if(j.intento===1)j.racha++;else j.racha=0;
+    const gran=j.racha>=3;
+    j.frase=gran?window.FX.frase('racha'):window.FX.frase('bien');
+    j.estado='bien';j.anim='bien';render();j.anim=null;
+    const c=window.FX.centro('#resp');
+    window.FX.sonido(gran?'racha':'bien');
+    window.FX.confeti({n:gran?90:34,x:c.x,y:c.y,fuerza:gran?13:9});
+    window.FX.flotar(j.intento===1?'+1 ⭐':'¡Bien!',$app.querySelector('#resp'));
+    setTimeout(siguiente,gran?1100:900);
   }else if(j.intento===1){
-    j.primera=j.respuesta;j.intento=2;j.estado='casi';j.respuesta='';render();
+    j.primera=j.respuesta;j.intento=2;j.estado='casi';j.respuesta='';j.racha=0;j.frase=window.FX.frase('casi');
+    j.anim='mal';render();j.anim=null;window.FX.sonido('mal');window.FX.vibrar(80);
   }else{
     j.detalle.push({q:p.q,c:window.fmtNum(p.resp),d:j.primera,ok:false});
-    j.estado='mostrar';render();
+    j.racha=0;j.frase=window.FX.frase('mostrar');
+    j.estado='mostrar';j.anim='mal';render();j.anim=null;window.FX.sonido('mal');window.FX.vibrar(120);
   }
 }
 function siguiente(){
@@ -542,19 +566,30 @@ function siguiente(){
   if(j.estado!=='bien'&&j.estado!=='mostrar')return;
   j.i++;j.intento=1;j.respuesta='';j.estado='esperando';j.pista=false;j.primera=null;
   if(j.i>=j.preguntas.length){terminar();return;}
-  render();
+  j.anim='nueva';render();j.anim=null;
 }
 async function terminar(){
   const j=S.j,pasa=j.aciertos>=CFG.UMBRAL,est=!pasa?0:(j.aciertos>=10?3:(j.aciertos===9?2:1));
   const k=key(S.mod,S.niv),a=S.prog[k]||{modulo:S.mod,nivel:S.niv,completado:false,estrellas:0,mejor:0,intentos:0};
   S.prog[k]={...a,completado:a.completado||pasa,estrellas:Math.max(a.estrellas,est),mejor:Math.max(a.mejor,j.aciertos),intentos:a.intentos+1};
   const args={p_modulo:S.mod,p_nivel:S.niv,p_aciertos:j.aciertos,p_total:CFG.TOTAL,p_detalle:j.detalle};
-  S.pantalla='resultado';render();
+  S.pantalla='resultado';render();celebrar(pasa,est);
   try{await rpc('guardar_intento',{p_token:S.token,...args});}
   catch(e){
     if(/sesion_invalida/.test(e.message)){sesionCaida();return;}
     const p=pend();p.push({a:args});lset('mate_pend',JSON.stringify(p));S.noGuardado=true;render();
   }
+}
+// fiesta al terminar un nivel
+function celebrar(pasa,est){
+  const F=window.FX;
+  if(pasa){
+    const m=mod(S.mod);if(m&&m.niveles.some(x=>x.n===S.niv+1))S.recien={m:S.mod,n:S.niv+1};
+    setTimeout(()=>F.sonido('nivel'),150);
+    F.confeti({n:110,x:innerWidth*.25,y:innerHeight*.55,fuerza:15,abanico:1.2});F.confeti({n:110,x:innerWidth*.75,y:innerHeight*.55,fuerza:15,abanico:1.2});
+    for(let i=0;i<est;i++)setTimeout(()=>F.sonido('estrella',i),600+i*500);
+    if(est===3)setTimeout(()=>{F.lluvia(['⭐','🌟','✨'],18);F.confeti({n:140,y:innerHeight*.3,fuerza:16,abanico:2.4});},1700);
+  }else{F.sonido('triste');F.vibrar(150);}
 }
 
 // ---------- acciones: profe ----------
