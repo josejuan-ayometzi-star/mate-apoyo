@@ -293,3 +293,16 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 @media(max-width:600px){#btn-sonido{width:46px;height:46px;font-size:21px;right:10px;bottom:10px}.prog.run>i::after{width:36px;height:36px;margin-top:-18px;right:-18px}}
 
 .frase-hoy{display:block;margin-top:4px;color:var(--sol);font-weight:700}
+
+/* App 1.7 · polígonos y nombre del club */
+.club{text-align:center;font:800 20px var(--letra);color:var(--sol);letter-spacing:.8px;margin:10px 0 0;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.q-box:has(.poli){gap:6px;align-content:center}
+.poli{width:min(100%,400px);height:auto;display:block;margin:0 auto}
+.poli.tres{width:min(100%,520px)}
+.q-peq{font-size:30px!important;margin-top:4px;line-height:1.2}
+.opm{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:16px 0 8px}
+.opmb{min-width:170px;min-height:76px;padding:0 24px;font:800 30px var(--letra);border-radius:20px;background:var(--papel);color:var(--azul);border:0;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.opmb:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.opmb.no{opacity:.35}
+.opm.a-mal{animation:sacude .5s}
+@media(max-width:600px){.opmb{min-width:120px;min-height:64px;font-size:25px}.q-peq{font-size:23px!important}}
