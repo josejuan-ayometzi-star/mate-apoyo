@@ -116,7 +116,23 @@ function decDivGen(nivel){return ()=>unicas(10,()=>{
   else{let n;do{n=R(2,nivel===1?999:(nivel===2?9999:9999));}while(n%10===0&&R(0,3)>0);txt=String(n);val=n;}
   return {vis:{tipo:'linea'},q:`${txt} ÷ ${k} = ?`,resp:val/k,
     pista:`Entre ${k}, el punto decimal se recorre ${z} lugar${z===1?'':'es'} a la izquierda. Si faltan lugares, agrega ceros.`};});}
+function decMul1Gen(nivel){return ()=>unicas(10,()=>{
+  const k=R(2,nivel===1?5:9);let ent,d,g=0;
+  do{ g++;
+    if(nivel===1){d=1;ent=R(11,99);}
+    else if(nivel===2){d=1;ent=R(12,999);}
+    else if(nivel===3){d=2;ent=R(105,999);}
+    else {d=R(0,2)?2:1;ent=d===2?R(10005,99999):R(1005,9999);}
+  }while(g<900 && !(nivel===1?String(ent).split('').every(c=>Number(c)*k<10):(nivel===4?ent%100!==0:(ent%10!==0||R(0,3)===0))));
+  const a=dec(ent,d),prod=ent*k,resp=Math.round(prod/Math.pow(10,d)*1e6)/1e6;
+  return {vis:{tipo:'col',a,b:String(k),op:'×'},q:`${a} × ${k}`,resp,
+    pista:`Quita el punto y multiplica: ${ent} × ${k} = ${prod}. El número tenía ${d} decimal${d>1?'es':''}, así que recorre el punto ${d} lugar${d>1?'es':''} desde la derecha: ${fmt(resp)}.`};});}
 const DECS=[
+ {id:'dec-mult1',titulo:'Decimal × un dígito',icono:'3.4×2',punto:true,niveles:[
+  {n:1,nombre:'Décimos, sin llevar',recuerda:'Multiplica como si no hubiera punto y después pon el punto: el resultado lleva los mismos decimales que el número. Ejemplo: 2.3 × 3 → 23 × 3 = 69 → 6.9.',gen:decMul1Gen(1)},
+  {n:2,nombre:'Décimos, con llevadas',recuerda:'Multiplica de derecha a izquierda y lleva lo que pase de 9. Al final, el punto queda con 1 decimal. Ejemplo: 4.7 × 6 → 47 × 6 = 282 → 28.2.',gen:decMul1Gen(2)},
+  {n:3,nombre:'Centésimos',recuerda:'Con dos decimales, el resultado lleva dos decimales (si queda un 0 al final, puedes quitarlo). Ejemplo: 3.45 × 4 → 345 × 4 = 1380 → 13.80 = 13.8.',gen:decMul1Gen(3)},
+  {n:4,nombre:'Números grandes',recuerda:'Igual que antes: quita el punto, multiplica, y vuelve a poner el punto contando los decimales. Ejemplo: 345.90 × 4 → 34590 × 4 = 138360 → 1383.60 = 1383.6.',gen:decMul1Gen(4)}]},
  {id:'dec-suma',titulo:'Sumas con decimales',icono:'+.',punto:true,niveles:[
   {n:1,nombre:'Décimos, sin llevar',recuerda:'Pon un número debajo del otro, con los puntos decimales alineados. Suma como si no hubiera punto y baja el punto en la misma posición.',gen:decSumaGen(1)},
   {n:2,nombre:'Décimos, con llevada',recuerda:'Si los décimos suman 10 o más, escribe la cifra y lleva 1 a las unidades. El punto siempre queda alineado.',gen:decSumaGen(2)},
