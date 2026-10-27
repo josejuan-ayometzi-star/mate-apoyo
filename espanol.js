@@ -518,7 +518,7 @@ const PEPE = [
         fichas:[{w:"Traje manzanas peras y uvas",caja:0},{w:"El sol salió temprano",caja:1}]}
     ],
     2:[
-      {tipo:"correct", instr:"Faltan las comas. ¿Dónde van?", frase:"Compré cuadernos lápices colores y goma.", errores:["cuadernos lápices colores"], correcciones:["cuadernos, lápices, colores"]},
+      {tipo:"correct", instr:"Faltan comas. Toca las palabras que deben llevar una coma después", frase:"Compré cuadernos lápices colores y goma.", errores:["cuadernos","lápices"], correcciones:["cuadernos,","lápices,"], ayuda:"Toca las palabras después de las cuales va una coma", oracion:"Compré cuadernos, lápices, colores y goma."},
       {tipo:"choice", pregunta:"¿Cuál está bien puntuada?", palabra:"?", opciones:["Vi perros, gatos y aves.","Vi perros gatos y aves."], correcta:0}
     ],
     3:[
@@ -633,7 +633,7 @@ const PEPE = [
     ],
     2:[
       {tipo:"choice", pregunta:"¿Cuál está bien escrita?", palabra:"?", opciones:["Compré: pan, leche y queso.","Compré, pan: leche y queso."], correcta:0},
-      {tipo:"correct", instr:"Falta el signo de dos puntos", frase:"Llevé todo lo necesario mochila, agua y mapa.", errores:["necesario mochila"], correcciones:["necesario: mochila"]}
+      {tipo:"correct", instr:"Falta el signo de dos puntos. Toca la palabra que lo lleva después", frase:"Llevé todo lo necesario mochila, agua y mapa.", errores:["necesario"], correcciones:["necesario:"], ayuda:"Toca la palabra después de la cual van los dos puntos", oracion:"Llevé todo lo necesario: mochila, agua y mapa."}
     ],
     3:[
       {tipo:"write", instr:"Escribe una lista de 3 materias usando dos puntos", validar:":", ejemplos:["Mis materias favoritas son: español, ciencias y arte."]},
@@ -739,7 +739,7 @@ const PEPE = [
       {tipo:"choice", pregunta:"¿Qué signo va aquí?", palabra:"___Dónde está mi mochila___", opciones:["¡ !","¿ ?"], correcta:1}
     ],
     2:[
-      {tipo:"correct", instr:"Puntúa el texto (faltan comas y punto)", frase:"la naturaleza nos da agua aire y árboles debemos cuidarlos", errores:["agua aire y árboles debemos"], correcciones:["agua, aire y árboles. Debemos"]}
+      {tipo:"correct", instr:"Puntúa el texto: faltan una coma y un punto. Toca las palabras que llevan el signo después", frase:"la naturaleza nos da agua aire y árboles debemos cuidarlos", errores:["agua","árboles"], correcciones:["agua,","árboles. (y Debemos con mayúscula)"], ayuda:"Toca las palabras después de las cuales va el signo", oracion:"La naturaleza nos da agua, aire y árboles. Debemos cuidarlos."}
     ],
     3:[
       {tipo:"write", instr:"Escribe un diálogo corto usando guiones largos (—)", validar:"—", ejemplos:["—¿Vienes al parque? —preguntó Ana."]},

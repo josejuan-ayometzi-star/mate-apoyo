@@ -244,7 +244,7 @@ function vJuegoEsp(){
       <div class="bins ${j.anim==='mal'?'a-mal':''}">${q.cajas.map((cj,b)=>`<button class="bin" data-b="${b}"><h4>${esc(cj)}</h4>${j.colocadas.filter(i=>q.fichas[i].caja===b).map(i=>`<span class="in">${esc(q.fichas[i].w)}</span>`).join('')}</button>`).join('')}</div>`;
   }else if(q.tipo==='correct'){
     const errs=new Set(q.errores.map(normE));
-    c=instr(q.instr)+`<div class="ayuda">Toca las palabras que están mal</div><div class="frase">${q.frase.split(' ').map((w,i)=>{
+    c=instr(q.instr)+`<div class="ayuda">${esc(q.ayuda||'Toca las palabras que están mal')}</div><div class="frase">${q.frase.split(' ').map((w,i)=>{
       let k='';if(fin){const e=errs.has(normE(w)),m=j.sel.includes(i);k=e&&m?'ok':(e?'miss':(m?'no':''));}else if(j.sel.includes(i))k='sel';
       return `<span class="pal ${k}" data-i="${i}">${esc(w)}</span>`;}).join(' ')}</div>`+(fin?'':`<div class="fila-acc"><button class="btn" id="revisar">Revisar</button></div>`);
   }else if(q.tipo==='transform'){
@@ -286,7 +286,7 @@ function bindEsp(){
       const errs=new Set(q.errores.map(normE)),pals=q.frase.split(' ');
       let ok=0,mal=0;pals.forEach((w,i)=>{const e=errs.has(normE(w)),m=j.sel.includes(i);if(e&&m)ok++;else if(!e&&m)mal++;});
       const todo=ok===q.errores.length&&mal===0;
-      finQ(todo,pals.filter((w,i)=>j.sel.includes(i)).join(' '),todo?`¡Perfecto! 🎉 Se escribe: <b>${esc(q.correcciones.join(' · '))}</b>`:`Encontraste ${ok} de ${q.errores.length}. Lo correcto es: <b>${esc(q.correcciones.join(' · '))}</b>`);});
+      finQ(todo,pals.filter((w,i)=>j.sel.includes(i)).join(' '),todo?`¡Perfecto! 🎉 Se escribe: <b>${esc(q.oracion||q.correcciones.join(' · '))}</b>`:`Encontraste ${ok} de ${q.errores.length}. Lo correcto es: <b>${esc(q.oracion||q.correcciones.join(' · '))}</b>`);});
   }else if(q.tipo==='transform'){
     const go=()=>{const v=$app.querySelector('#tIn').value.trim();if(!v)return;j.dado=v;const ok=normE(v)===normE(q.destino);
       finQ(ok,v,ok?`¡Muy bien! 🎉 Se escribe: <b>${esc(q.destino)}</b>`:`Casi… la respuesta es: <b>${esc(q.destino)}</b>`);};
