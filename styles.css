@@ -306,3 +306,11 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 .opmb.no{opacity:.35}
 .opm.a-mal{animation:sacude .5s}
 @media(max-width:600px){.opmb{min-width:120px;min-height:64px;font-size:25px}.q-peq{font-size:23px!important}}
+
+/* App 2.0 · panel separado */
+.t th.gm{background:var(--naranja)} .t th.ge{background:var(--verde)}
+.t td.cm{background:#fff3ea;text-align:center} .t td.ce{background:#eaf7ef;text-align:center}
+.t th[colspan]{text-align:center}
+.tit-m{border-left:8px solid var(--naranja);padding-left:10px} .tit-e{border-left:8px solid var(--verde);padding-left:10px}
+.resum-sec{color:var(--gis);margin:4px 0 8px;font-size:18px} .resum-sec b{color:var(--sol)}
+h3.sub-err{color:var(--gis);font-size:18px;margin:14px 0 6px}

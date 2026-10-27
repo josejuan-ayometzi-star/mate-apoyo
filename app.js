@@ -340,7 +340,8 @@ function ago(f){if(!f)return '—';const d=(Date.now()-new Date(f).getTime())/86
 function etiqueta(r){
   const d=r.ultima_actividad?(Date.now()-new Date(r.ultima_actividad).getTime())/86400000:null;
   if(d===null)return '<span class="etq gris">Sin empezar</span>';
-  if(r.intentos>=4&&r.intentos>r.niveles_completados*2.5)return '<span class="etq alerta">Se está atorando</span>';
+  const mi=r.mate_intentos!==undefined?r.mate_intentos:r.intentos,mn=r.mate_niveles!==undefined?r.mate_niveles:r.niveles_completados;
+  if(mi>=4&&mi>mn*2.5)return '<span class="etq alerta">Se está atorando en Mate</span>';
   if(d>=5)return '<span class="etq alerta">Sin actividad</span>';
   return '<span class="etq ok">Avanzando</span>';
 }
@@ -352,7 +353,7 @@ function vProfeLogin(){
 }
 function vProfePanel(){
   const P=S.profe,all=P.resumen,r=all.filter(a=>a.activo!==false),bajas=all.filter(a=>a.activo===false);
-  const sinpin=r.filter(a=>!a.pin).length;
+  const sinpin=r.filter(a=>!a.pin).length,sep=r.length>0&&r[0].mate_intentos!==undefined;
   return `${top(`<button class="btn sec chico" id="salirp">Salir</button>`)}<h1>Avance del grupo</h1>
   <div class="fila-acc solo-pantalla" style="justify-content:flex-start;margin-bottom:12px">
    <button class="btn chico" id="nuevos">+ Agregar alumnos</button><button class="btn sec chico" id="act">↻ Actualizar</button>
@@ -361,8 +362,11 @@ function vProfePanel(){
   ${sinpin?`<div class="card solo-pantalla" style="margin-bottom:12px"><p><b>${sinpin} alumno${sinpin===1?'':'s'} sin PIN visible</b> (se crearon antes de esta versión). Abre cada alumno y escribe su PIN actual para guardarlo, o genera PINes nuevos para ${sinpin===1?'ese alumno':'todos ellos'}.</p>
    <button class="btn nar chico" id="pinfalt">Generar PINes nuevos</button></div>`:''}
   ${P.nuevos?vNuevos():''}
-  <table class="t solo-pantalla"><thead><tr><th>Alumno</th>${P.verpin?'<th>PIN</th>':''}<th>Niveles ✓</th><th>★</th><th>Intentos</th><th>Última vez</th><th>Estado</th></tr></thead><tbody>
-  ${r.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td><b>${esc(a.nombre)}</b></td>${P.verpin?`<td><b>${esc(a.pin||'—')}</b></td>`:''}<td>${a.niveles_completados}</td><td>${a.estrellas}</td><td>${a.intentos}</td><td>${ago(a.ultima_actividad)}</td><td>${etiqueta(a)}</td></tr>`).join('')}
+  ${sep?'':`<div class="card solo-pantalla" style="margin-bottom:12px"><p><b>Para ver Matemáticas y Español por separado</b> hay que correr el SQL 05 en Supabase (el que te pasé en el chat). Mientras tanto verás los totales juntos.</p></div>`}
+  <table class="t solo-pantalla"><thead>${sep?`<tr><th rowspan="2">Alumno</th>${P.verpin?'<th rowspan="2">PIN</th>':''}<th colspan="3" class="gm">🧮 Matemáticas</th><th colspan="3" class="ge">✎ Español</th><th rowspan="2">Última vez</th><th rowspan="2">Estado</th></tr>
+   <tr><th class="gm">Niveles ✓</th><th class="gm">★</th><th class="gm">Intentos</th><th class="ge">Niveles ✓</th><th class="ge">★</th><th class="ge">Intentos</th></tr>`
+   :`<tr><th>Alumno</th>${P.verpin?'<th>PIN</th>':''}<th>Niveles ✓</th><th>★</th><th>Intentos</th><th>Última vez</th><th>Estado</th></tr>`}</thead><tbody>
+  ${r.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td><b>${esc(a.nombre)}</b></td>${P.verpin?`<td><b>${esc(a.pin||'—')}</b></td>`:''}${sep?`<td class="cm">${a.mate_niveles}</td><td class="cm">${a.mate_estrellas}</td><td class="cm">${a.mate_intentos}</td><td class="ce">${a.esp_niveles}</td><td class="ce">${a.esp_estrellas}</td><td class="ce">${a.esp_intentos}</td>`:`<td>${a.niveles_completados}</td><td>${a.estrellas}</td><td>${a.intentos}</td>`}<td>${ago(a.ultima_actividad)}</td><td>${etiqueta(a)}</td></tr>`).join('')}
   </tbody></table>${r.length?'':'<p>Aún no hay alumnos. Usa "Agregar alumnos".</p>'}
   ${bajas.length?`<h2 class="solo-pantalla">Dados de baja</h2><table class="t solo-pantalla"><tbody>${bajas.map(a=>`<tr class="fila" data-id="${esc(a.alumno_id)}"><td>${esc(a.nombre)}</td><td>${a.niveles_completados} niveles ✓</td><td><span class="etq gris">Baja</span></td></tr>`).join('')}</tbody></table>`:''}`;
 }
@@ -376,15 +380,21 @@ function vNuevos(){
   <textarea id="lista" rows="7" style="width:100%;font-size:19px;padding:10px;border:3px solid var(--linea);border-radius:14px;font-family:inherit;user-select:text;-webkit-user-select:text"></textarea>
   <div class="fila-acc" style="justify-content:flex-start;margin-top:10px"><button class="btn ok chico" id="crearn">Crear</button><button class="btn sec chico" id="cerrarn">Cancelar</button></div></div>`;
 }
+const esEsp=m=>/^(orto|pepe)-/.test(m);
+function seccionMat(titulo,es){
+  const P=S.profe,det=P.det.filter(d=>esEsp(d.modulo)===es),err=P.errores.filter(e=>esEsp(e.modulo)===es);
+  const pas=det.filter(d=>d.completado).length,est=det.reduce((s,d)=>s+d.estrellas,0),itn=det.reduce((s,d)=>s+d.intentos,0);
+  return `<h2 class="${es?'tit-e':'tit-m'}">${titulo}</h2>
+  ${det.length?`<p class="resum-sec"><b>${pas}</b> nivel${pas===1?'':'es'} pasado${pas===1?'':'s'} · <b>${est}</b> ★ · <b>${itn}</b> intento${itn===1?'':'s'}</p>
+  <table class="t"><thead><tr><th class="${es?'ge':'gm'}">Tema</th><th class="${es?'ge':'gm'}">Nivel</th><th class="${es?'ge':'gm'}">Estado</th><th class="${es?'ge':'gm'}">Mejor</th><th class="${es?'ge':'gm'}">★</th><th class="${es?'ge':'gm'}">Intentos</th></tr></thead><tbody>
+  ${det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':'<span class="etq gris">En práctica</span>'}</td><td>${d.mejor}/${d.total||CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
+  </tbody></table>`:'<p>Todavía no ha practicado aquí.</p>'}
+  ${err.length?`<h3 class="sub-err">Errores más frecuentes</h3><table class="t"><thead><tr><th>Tema</th><th>Pregunta</th><th>Veces</th><th>Contestó</th><th>Correcta</th></tr></thead><tbody>${err.map(e=>{const m=mod(e.modulo);return `<tr><td>${esc(m?m.titulo:e.modulo)}</td><td>${esc(e.pregunta)}</td><td>${e.veces}</td><td>${esc(e.ultima_respuesta??'')}</td><td>${esc(e.correcta)}</td></tr>`;}).join('')}</tbody></table>`:''}`;
+}
 function vProfeDetalle(){
   const P=S.profe,a=P.alumno;
   return `${top(`<button class="btn sec chico" id="volverp">← Grupo</button>`)}<h1>${esc(a.nombre)}</h1>
-  <h2>Niveles</h2>
-  <table class="t"><thead><tr><th>Tema</th><th>Nivel</th><th>Estado</th><th>Mejor</th><th>★</th><th>Intentos</th></tr></thead><tbody>
-  ${P.det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':'<span class="etq gris">En práctica</span>'}</td><td>${d.mejor}/${d.total||CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
-  </tbody></table>${P.det.length?'':'<p>Todavía no ha practicado.</p>'}
-  <h2>Errores más frecuentes</h2>
-  ${P.errores.length?`<table class="t"><thead><tr><th>Tema</th><th>Pregunta</th><th>Veces</th><th>Contestó</th><th>Correcta</th></tr></thead><tbody>${P.errores.map(e=>{const m=mod(e.modulo);return `<tr><td>${esc(m?m.titulo:e.modulo)}</td><td>${esc(e.pregunta)}</td><td>${e.veces}</td><td>${esc(e.ultima_respuesta??'')}</td><td>${esc(e.correcta)}</td></tr>`;}).join('')}</tbody></table>`:'<p>Sin errores registrados.</p>'}
+  ${[['🧮 Matemáticas',false],['✎ Español',true]].map(([t,es])=>seccionMat(t,es)).join('')}
   <h2>Datos del alumno</h2>
   <div class="card"><label>Nombre</label><input type="text" id="nnombre" value="${esc(a.nombre)}">
    <div class="fila-acc" style="justify-content:flex-start;margin-bottom:14px"><button class="btn chico" id="cnombre">Guardar nombre</button></div>
