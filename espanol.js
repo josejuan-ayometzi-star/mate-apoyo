@@ -617,6 +617,19 @@ const PEPE = [
     3:[
       {tipo:"write", instr:"Escribe una oración con TÚ (persona)", validar:"tú", ejemplos:["Tú eres muy inteligente."]},
       {tipo:"write", instr:"Escribe una oración con MÁS", validar:"más", ejemplos:["Quiero más tiempo para jugar."]}
+    ],
+    4:[
+      {"tipo": "choice", "pregunta": "¿Cómo se escribe?", "palabra": "___ me regaló este libro.", "opciones": ["Él", "El"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cómo se escribe?", "palabra": "Voy a ___ casa por la tarde.", "opciones": ["tu", "tú"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cómo se escribe?", "palabra": "Dijo que ___ iría, pero no pudo.", "opciones": ["sí", "si"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cómo se escribe?", "palabra": "___ llueve, nos quedamos en casa.", "opciones": ["Si", "Sí"], "correcta": 0},
+      {"tipo": "correct", "instr": "Faltan tildes diacríticas", "frase": "Tu sabes que mi mamá me quiere mas que a nadie.", "errores": ["Tu", "mas"], "correcciones": ["Tú", "más"], "ayuda": "Toca las palabras que necesitan tilde", "oracion": "Tú sabes que mi mamá me quiere más que a nadie."}
+    ],
+    5:[
+      {"tipo": "correct", "instr": "Corrige las tildes diacríticas", "frase": "Mi papá dijo que el viene mañana, pero tu no sabes si vendrá.", "errores": ["el", "tu"], "correcciones": ["Él", "Tú"], "ayuda": "Toca las palabras que necesitan tilde", "oracion": "Mi papá dijo que él viene mañana, pero tú no sabes si vendrá."},
+      {"tipo": "choice", "pregunta": "¿En cuál oración la palabra «sí» lleva tilde?", "palabra": "?", "opciones": ["Sí, quiero ir contigo.", "Si quiero, voy contigo."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cuál oración está bien escrita?", "palabra": "?", "opciones": ["Tú dijiste que tu perro está enfermo.", "Tu dijiste que tú perro está enfermo."], "correcta": 0},
+      {"tipo": "write", "instr": "Escribe una oración con SÍ (afirmar) y otra con SI (condición)", "validar": "si", "ejemplos": ["Sí, voy a la fiesta. Si llueve, me quedo en casa."]}
     ]
   }
 },
@@ -638,6 +651,18 @@ const PEPE = [
     3:[
       {tipo:"write", instr:"Escribe una lista de 3 materias usando dos puntos", validar:":", ejemplos:["Mis materias favoritas son: español, ciencias y arte."]},
       {tipo:"write", instr:"Escribe una oración con punto y coma", validar:";", ejemplos:["Quería salir; sin embargo, llovía."]}
+    ],
+    4:[
+      {"tipo": "choice", "pregunta": "¿Qué signo falta?", "palabra": "Necesito para la clase ___ cuaderno, lápiz y regla.", "opciones": [": (dos puntos)", "; (punto y coma)"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Qué signo falta?", "palabra": "Me gusta nadar ___ mi hermano prefiere correr.", "opciones": [": (dos puntos)", "; (punto y coma)"], "correcta": 1},
+      {"tipo": "classify", "instr": "¿Dos puntos o punto y coma?", "cajas": ["Dos puntos", "Punto y coma"], "fichas": [{"w": "Ingredientes ___ harina, huevos y leche", "caja": 0}, {"w": "Llegué temprano ___ el salón estaba vacío", "caja": 1}, {"w": "Querido amigo ___ (inicio de una carta)", "caja": 0}, {"w": "Hacía frío ___ aun así salimos", "caja": 1}]},
+      {"tipo": "correct", "instr": "Falta el signo de dos puntos. Toca la palabra que lo lleva después", "frase": "Ana trajo frutas manzanas, uvas y fresas.", "errores": ["frutas"], "correcciones": ["frutas:"], "ayuda": "Toca la palabra después de la cual van los dos puntos", "oracion": "Ana trajo frutas: manzanas, uvas y fresas."},
+      {"tipo": "choice", "pregunta": "¿Cuál está bien escrita?", "palabra": "?", "opciones": ["Tengo dos mascotas: un perro y un gato.", "Tengo dos: mascotas un perro y un gato."], "correcta": 0}
+    ],
+    5:[
+      {"tipo": "correct", "instr": "Falta el punto y coma. Toca la palabra que lo lleva después", "frase": "Quería ir al cine mi hermano quería ir al parque.", "errores": ["cine"], "correcciones": ["cine;"], "ayuda": "Toca la palabra después de la cual va el punto y coma", "oracion": "Quería ir al cine; mi hermano quería ir al parque."},
+      {"tipo": "choice", "pregunta": "¿Cuál usa bien los dos puntos?", "palabra": "?", "opciones": ["Lleva lo necesario: mochila, agua y mapa.", "Lleva: lo necesario mochila, agua y mapa."], "correcta": 0},
+      {"tipo": "write", "instr": "Escribe una oración con dos puntos para anunciar 3 cosas que llevas en tu mochila", "validar": ":", "ejemplos": ["En mi mochila llevo: libreta, estuche y agua."]}
     ]
   }
 },
@@ -659,6 +684,18 @@ const PEPE = [
     3:[
       {tipo:"write", instr:"Escribe una frase adjetiva para describir una casa", validar:"de", ejemplos:["una casa de dos pisos"]},
       {tipo:"write", instr:"Escribe una oración con una frase adverbial", validar:"con", ejemplos:["Caminamos con mucha prisa."]}
+    ],
+    4:[
+      {"tipo": "choice", "pregunta": "¿Cuál es la FRASE ADJETIVA?", "palabra": "La niña de ojos verdes sonrió", "opciones": ["de ojos verdes", "sonrió"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cuál es la FRASE ADVERBIAL?", "palabra": "Salimos del salón en silencio", "opciones": ["en silencio", "Salimos"], "correcta": 0},
+      {"tipo": "classify", "instr": "¿Adjetiva o adverbial?", "cajas": ["Adjetiva (cómo es)", "Adverbial (cómo se hace)"], "fichas": [{"w": "de gran tamaño", "caja": 0}, {"w": "con mucho cuidado", "caja": 1}, {"w": "de color rojo", "caja": 0}, {"w": "a toda prisa", "caja": 1}]},
+      {"tipo": "choice", "pregunta": "Mejora la oración: «Corrió»", "palabra": "?", "opciones": ["Corrió a toda velocidad por el parque.", "Corrió corriendo corrido."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "Transforma: «un jardín muy grande»", "palabra": "?", "opciones": ["un jardín de gran tamaño", "un jardín muy jardín"], "correcta": 0}
+    ],
+    5:[
+      {"tipo": "choice", "pregunta": "¿Cuál oración tiene una frase adjetiva Y una adverbial?", "palabra": "?", "opciones": ["El perro de pelo largo corrió con alegría.", "El perro corrió y saltó."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "Sustituye «rápidamente» por una frase adverbial", "palabra": "Terminó la tarea rápidamente.", "opciones": ["Terminó la tarea a toda prisa.", "Terminó la tarea rápida."], "correcta": 0},
+      {"tipo": "write", "instr": "Describe a un animal con una frase adjetiva y una frase adverbial", "validar": "", "ejemplos": ["Mi perro de pelo suave camina con mucha alegría."]}
     ]
   }
 },
@@ -681,6 +718,18 @@ const PEPE = [
     3:[
       {tipo:"write", instr:"Escribe cómo llegas a la escuela usando PRIMERO, DESPUÉS, FINALMENTE", validar:"primero", ejemplos:["Primero me levanto. Después desayuno. Finalmente camino a la escuela."]},
       {tipo:"write", instr:"Escribe una oración con SIN EMBARGO", validar:"sin embargo", ejemplos:["Quería jugar; sin embargo, tenía tarea."]}
+    ],
+    4:[
+      {"tipo": "choice", "pregunta": "Elige el conector de CONTRASTE", "palabra": "Mi hermano estudia mucho; yo, ___, prefiero jugar.", "opciones": ["en cambio", "además"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "Elige el conector de ORDEN", "palabra": "___ lava las frutas; después córtalas.", "opciones": ["Primero", "Sin embargo"], "correcta": 0},
+      {"tipo": "classify", "instr": "¿Contraste u orden?", "cajas": ["Contraste", "Orden"], "fichas": [{"w": "aunque", "caja": 0}, {"w": "después", "caja": 1}, {"w": "sin embargo", "caja": 0}, {"w": "por último", "caja": 1}]},
+      {"tipo": "choice", "pregunta": "Completa la oración", "palabra": "___ hacía frío, salimos a jugar.", "opciones": ["Aunque", "Primero"], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cuál oración usa bien los conectores?", "palabra": "?", "opciones": ["Primero me baño; después me visto; finalmente desayuno.", "Finalmente me baño; primero desayuno; después me visto."], "correcta": 0}
+    ],
+    5:[
+      {"tipo": "correct", "instr": "Faltan signos. Toca las palabras después de las cuales va un signo", "frase": "Quería ir de paseo sin embargo llovió todo el día.", "errores": ["paseo", "embargo"], "correcciones": ["paseo;", "embargo,"], "ayuda": "Toca las palabras después de las cuales va un signo", "oracion": "Quería ir de paseo; sin embargo, llovió todo el día."},
+      {"tipo": "choice", "pregunta": "Une con contraste", "palabra": "Mi primo vive lejos. Nos vemos cada semana.", "opciones": ["Mi primo vive lejos; sin embargo, nos vemos cada semana.", "Mi primo vive lejos primero nos vemos cada semana."], "correcta": 0},
+      {"tipo": "write", "instr": "Escribe una oración con AUNQUE", "validar": "aunque", "ejemplos": ["Aunque estaba cansado, terminé la tarea."]}
     ]
   }
 },
@@ -702,6 +751,18 @@ const PEPE = [
     ],
     3:[
       {tipo:"write", instr:"Escribe un párrafo completo (principal + apoyo + cierre) sobre tu estación favorita", validar:"", ejemplos:["Mi estación favorita es el verano. Puedo nadar y salir a jugar. Por eso la espero cada año."]}
+    ],
+    4:[
+      {"tipo": "classify", "instr": "Identifica las partes del párrafo", "cajas": ["Principal", "Apoyo"], "fichas": [{"w": "Mi abuela cocina delicioso", "caja": 0}, {"w": "Hace tamales y mole", "caja": 1}, {"w": "Siempre me invita a comer", "caja": 1}]},
+      {"tipo": "choice", "pregunta": "¿Cuál es la ORACIÓN PRINCIPAL?", "palabra": "?", "opciones": ["Cuidar el agua es importante para todos.", "Cierro la llave mientras me lavo los dientes."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Cuál es el CIERRE?", "palabra": "?", "opciones": ["Por eso debemos cuidar el agua todos los días.", "El agua sale de la llave."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Qué oración NO pertenece al párrafo?", "palabra": "Me divierto en el recreo. Juego fútbol con mis amigos. Mi tía vive en otra ciudad. Es mi momento favorito.", "opciones": ["Mi tía vive en otra ciudad.", "Juego fútbol con mis amigos."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "¿Qué va PRIMERO en un párrafo?", "palabra": "?", "opciones": ["La oración principal", "El cierre"], "correcta": 0}
+    ],
+    5:[
+      {"tipo": "choice", "pregunta": "Evita la repetición", "palabra": "El perro es bonito. Su pelo es bonito. Su cola es bonita.", "opciones": ["El perro es bonito. Su pelo es suave. Su cola es esponjosa.", "El perro es bonito. Su pelo es bonito. Su cola es bonita."], "correcta": 0},
+      {"tipo": "choice", "pregunta": "Elige el párrafo mejor organizado", "palabra": "?", "opciones": ["Me encanta leer. Los libros me llevan a otros mundos. Por eso leo todos los días.", "Por eso leo todos los días. Los libros me llevan a otros mundos. Me encanta leer."], "correcta": 0},
+      {"tipo": "write", "instr": "Escribe un párrafo de 3 oraciones sobre tu comida favorita: principal, apoyo y cierre", "validar": "", "ejemplos": ["Mi comida favorita es la pizza. Me gusta el queso y la salsa. Por eso la pido cada fin de semana."]}
     ]
   }
 },

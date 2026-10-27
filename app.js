@@ -8,12 +8,13 @@ const S={pantalla:'cargando',alumnos:[],token:null,nombre:null,prog:{},pin:'',pi
   mod:null,niv:null,j:null,profe:{verpin:false,jwt:null,resumen:[],det:null,errores:[],alumno:null,nuevos:null,msg:''}};
 // ---------- Español: módulos construidos desde espanol.js ----------
 const ESPD=window.ESP||{ORTO:[],PEPE:[],RONDAS:[],NIVELES:[]};
-const NOMBRES_NIV=['Reconocer','Aplicar','Producir'],DESC_NIV=['Identifico y clasifico','Completo y corrijo','Creo y escribo'];
+const NOMBRES_NIV=['Reconocer','Aplicar','Producir','Reto','Maestro'],DESC_NIV=['Identifico y clasifico','Completo y corrijo','Creo y escribo','Aplico en situaciones nuevas','Domino y creo'];
+const PASA_ESP=0.8;
 const MODULOS_ESP=[];
 ESPD.ORTO.forEach(L=>MODULOS_ESP.push({id:'orto-'+L.id,esp:true,grupo:'orto',titulo:'Ortografía · '+L.nombre,corto:L.letra,reglas:L.reglas,
-  niveles:[1,2,3].filter(n=>(L.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:L.niveles[n]}))}));
+  niveles:[1,2,3,4,5].filter(n=>(L.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:L.niveles[n]}))}));
 ESPD.PEPE.forEach(F=>MODULOS_ESP.push({id:'pepe-'+F.folio,esp:true,grupo:'pepe',titulo:'Folio '+F.folio+' · '+F.tema,corto:String(F.folio),tema:F.tema,subtitulo:F.subtitulo,ronda:F.ronda,recordatorio:F.recordatorio,
-  niveles:[1,2,3].filter(n=>(F.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:F.niveles[n]}))}));
+  niveles:[1,2,3,4,5].filter(n=>(F.niveles[n]||[]).length).map(n=>({n,nombre:NOMBRES_NIV[n-1],desc:DESC_NIV[n-1],preguntas:F.niveles[n]}))}));
 const mod=id=>window.MODULOS.concat(MODULOS_ESP).find(m=>m.id===id);
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3200);}
 const store={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
@@ -147,16 +148,16 @@ function recuerdaEsp(m){
 function vNiveles(){
   const m=mod(S.mod);
   return `${top(`<button class="btn sec chico" id="home">${m.esp?'← Español':'← Inicio'}</button>`)}
-  <h1>${esc(m.titulo)}</h1>${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Completa cada nivel para abrir el siguiente.</p>`:`<p>Pasa cada nivel con ${CFG.UMBRAL} aciertos de ${CFG.TOTAL} para abrir el siguiente.</p>`}
-  <div class="niveles">${m.niveles.map(l=>{const p=pr(m.id,l.n);const ab=abierto(m.id,l.n);const h=hecho(m.id,l.n);
+  <h1>${esc(m.titulo)}</h1>${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Para abrir el siguiente nivel necesitas al menos el ${Math.round(PASA_ESP*100)}% de aciertos. Si te equivocas, aprende de la respuesta y vuelve a intentarlo.</p>`:`<p>Pasa cada nivel con ${CFG.UMBRAL} aciertos de ${CFG.TOTAL} para abrir el siguiente.</p>`}
+  <div class="niveles">${m.niveles.map(l=>{const p=pr(m.id,l.n);const bq=!!(m.esp&&p&&p.bloqueado&&!p.completado);const ab=abierto(m.id,l.n)&&!bq;const h=hecho(m.id,l.n);
     const nuevo=S.recien&&S.recien.m===m.id&&S.recien.n===l.n;
-    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'} ${nuevo?'nuevo':''}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${p?`Mejor: ${p.mejor} de ${p.total||CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior')}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
+    return `<button class="niv ${h?'hecho':''} ${ab?'':'cerrado'} ${nuevo?'nuevo':''}" data-n="${l.n}" ${ab?'':'disabled'}><div class="num">${ab?(h?'✓':l.n):'🔒'}</div><div><div class="nm">${esc(l.nombre)}</div><div class="sub">${bq?'🔒 Pide ayuda a tu profe para seguir':(p?`Mejor: ${p.mejor} de ${p.total||CFG.TOTAL} · ${p.intentos} intento${p.intentos===1?'':'s'}`:(ab?'¡Listo para empezar!':'Pasa el nivel anterior'))}</div></div>${h?estrellasHtml(p.estrellas):''}</button>`;}).join('')}</div>`;
 }
 function vIntro(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
   return `${top(`<button class="btn sec chico" id="volver">← Niveles</button>`)}
   <h1>${esc(m.titulo)} · Nivel ${l.n}</h1><h2 style="margin-top:4px">${esc(l.nombre)}</h2>
-  ${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Son ${l.preguntas.length} ejercicios. Si te equivocas, verás la respuesta correcta para aprender. ¡Tú puedes!</p>`
+  ${m.esp?`<div class="recuerda">${recuerdaEsp(m)}</div><p>Son ${l.preguntas.length} ejercicios. Para pasar necesitas al menos el ${Math.round(PASA_ESP*100)}% de aciertos. Si te equivocas, verás la respuesta correcta para aprender. ¡Tú puedes!</p>`
   :`<div class="recuerda"><b>Recuerda:</b> ${esc(l.recuerda)}</div>
   <p>Son ${CFG.TOTAL} preguntas. Si fallas, puedes intentarlo otra vez y ver una pista. Para pasar necesitas ${CFG.UMBRAL} bien a la primera. Si no lo logras, practicas de nuevo con números nuevos.</p>`}
   <div class="fila-acc"><button class="btn ok" id="empezar">¡Empezar!</button></div>`;
@@ -216,9 +217,14 @@ function prepararQ(){
   j.fase='resp';j.msg='';j.ok=null;j.sel=[];j.sel1=null;j.colocadas=[];j.fallo=false;j.elegida=null;
   j.orden=q.tipo==='classify'?q.fichas.map((f,i)=>i).sort(()=>Math.random()-.5):null;
 }
+function barajaQ(q){
+  if((q.tipo!=='choice'&&q.tipo!=='fill')||!q.opciones||q.opciones.some(o=>/anteriores|ambas|todas|ninguna/i.test(o)))return q;
+  const idx=q.opciones.map((_,i)=>i).sort(()=>Math.random()-.5);
+  return Object.assign({},q,{opciones:idx.map(i=>q.opciones[i]),correcta:idx.indexOf(q.correcta)});
+}
 function empezarEsp(){
   const m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);
-  S.noGuardado=false;S.je={qs:l.preguntas,i:0,aciertos:0,detalle:[],racha:0,pw:0,anim:'nueva'};
+  S.noGuardado=false;S.je={qs:l.preguntas.map(barajaQ),i:0,aciertos:0,detalle:[],racha:0,pw:0,anim:'nueva'};
   prepararQ();S.pantalla='juegoesp';render();S.je.anim=null;
 }
 function finQ(ok,dado,msg){
@@ -302,12 +308,13 @@ function bindEsp(){
   }
 }
 async function terminarEsp(){
-  const j=S.je,total=j.qs.length,pct=total?j.aciertos/total:0,est=pct>=.9?3:(pct>=.6?2:1);
-  S.j={esp:true,aciertos:j.aciertos,total,detalle:j.detalle,est};
-  const k=key(S.mod,S.niv),a=S.prog[k]||{modulo:S.mod,nivel:S.niv,completado:false,estrellas:0,mejor:0,intentos:0};
-  S.prog[k]={...a,completado:true,estrellas:Math.max(a.estrellas,est),mejor:Math.max(a.mejor,j.aciertos),intentos:a.intentos+1,total};
+  const j=S.je,total=j.qs.length,pct=total?j.aciertos/total:0,pasa=total>0&&pct>=PASA_ESP-1e-9,est=!pasa?0:(pct>=.9?3:2);
+  const k=key(S.mod,S.niv),a=S.prog[k]||{modulo:S.mod,nivel:S.niv,completado:false,estrellas:0,mejor:0,intentos:0,fallidos:0,bloqueado:false};
+  const compl=a.completado||pasa,fall=pasa?0:(a.completado?(a.fallidos||0):(a.fallidos||0)+1),bloq=!compl&&fall>=3;
+  S.j={esp:true,aciertos:j.aciertos,total,detalle:j.detalle,est,pasa,bloqueado:bloq};
+  S.prog[k]={...a,completado:compl,estrellas:Math.max(a.estrellas,est),mejor:Math.max(a.mejor,j.aciertos),intentos:a.intentos+1,total,fallidos:fall,bloqueado:bloq};
   const args={p_modulo:S.mod,p_nivel:S.niv,p_aciertos:j.aciertos,p_total:total,p_detalle:j.detalle};
-  S.pantalla='resultado';render();celebrar(true,est);
+  S.pantalla='resultado';render();celebrar(pasa,est);
   try{await rpc('guardar_intento',{p_token:S.token,...args});}
   catch(e){
     if(/sesion_invalida/.test(e.message)){sesionCaida();return;}
@@ -315,21 +322,22 @@ async function terminarEsp(){
   }
 }
 function vResultado(){
-  const j=S.j,m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);const esp=!!j.esp;const pasa=esp?true:j.aciertos>=CFG.UMBRAL;
+  const j=S.j,m=mod(S.mod),l=m.niveles.find(x=>x.n===S.niv);const esp=!!j.esp;const pasa=esp?!!j.pasa:j.aciertos>=CFG.UMBRAL;
   const est=esp?j.est:(!pasa?0:(j.aciertos>=10?3:(j.aciertos===9?2:1)));
   const fallos=j.detalle.filter(d=>!d.ok);
-  if(S.resKey!==j){S.resKey=j;S.fraseRes=window.FX.frase(esp?'esp':(!pasa?'noPasa':(est===3?'pasa3':'pasa')));}
+  if(S.resKey!==j){S.resKey=j;S.fraseRes=window.FX.frase(!pasa?'noPasa':(est===3?'pasa3':(esp?'esp':'pasa')));}
   const haySig=m.niveles.some(x=>x.n===S.niv+1);
   return `${top('')}
   <div class="res-gde">${pasa?'🎉':'💪'}</div>
-  <h1 style="text-align:center">${esp?(est===3?'¡Excelente!':est===2?'¡Bien hecho!':'¡Terminaste!'):(pasa?'¡Lo lograste!':'¡Casi lo logras!')}</h1>
+  <h1 style="text-align:center">${esp?(!pasa?'¡Casi lo logras!':est===3?'¡Excelente!':'¡Bien hecho!'):(pasa?'¡Lo lograste!':'¡Casi lo logras!')}</h1>
   <p style="text-align:center;font-size:22px">${j.aciertos} de ${esp?j.total:CFG.TOTAL} bien${esp?'':' a la primera'}</p>
+  ${esp&&!pasa?`<p style="text-align:center">${j.bloqueado?'🔒 Este nivel se bloqueó después de varios intentos. <b>Avisa a tu profe</b>: te va a ayudar para seguir.':`Para pasar necesitas al menos el ${Math.round(PASA_ESP*100)}% de aciertos. Repasa abajo y vuelve a intentarlo.`}</p>`:''}
   ${pasa?`<div class="res-est">${[0,1,2].map(i=>`<span class="e ${i<est?'on':'off'}" style="--i:${i}">★</span>`).join('')}</div>`:''}
   <div class="res-msg">${esc(S.fraseRes||'')}</div>
   ${fallos.length?`<h2>Para repasar</h2>${fallos.map(f=>esp?`<div class="fall">${esc(f.q)}<br><b>Respuesta: ${esc(f.c||'—')}</b></div>`:`<div class="fall">${/¿/.test(f.q)?esc(f.q)+' <b>Respuesta: '+esc(f.c)+'</b>':esc(f.q.replace('?',f.c).replace('□',f.c))}${!/¿/.test(f.q)&&/[+−×÷]/.test(f.q)&&!/[=]/.test(f.q)?' = '+esc(f.c):''}</div>`).join('')}`:''}
   <div class="fila-acc" style="margin-top:16px">
    ${pasa&&haySig?`<button class="btn ok" id="siguiente">Siguiente nivel →</button>`:''}
-   <button class="btn ${pasa?'sec':'nar'}" id="otra">${pasa?'Practicar otra vez':'Intentar con números nuevos'}</button>
+   ${(esp&&j.bloqueado)?'':`<button class="btn ${pasa?'sec':'nar'}" id="otra">${pasa?'Practicar otra vez':(esp?'Intentar otra vez':'Intentar con números nuevos')}</button>`}
    <button class="btn sec" id="volver">Ver niveles</button>
   </div>
   ${S.noGuardado?'<p class="ver" style="text-align:center">Sin internet: tu resultado se enviará cuando haya conexión.</p>':''}`;
@@ -340,6 +348,7 @@ function ago(f){if(!f)return '—';const d=(Date.now()-new Date(f).getTime())/86
 function etiqueta(r){
   const d=r.ultima_actividad?(Date.now()-new Date(r.ultima_actividad).getTime())/86400000:null;
   if(d===null)return '<span class="etq gris">Sin empezar</span>';
+  if(r.bloqueados>0)return `<span class="etq alerta">🔒 ${r.bloqueados} nivel${r.bloqueados===1?'':'es'} bloqueado${r.bloqueados===1?'':'s'}</span>`;
   const mi=r.mate_intentos!==undefined?r.mate_intentos:r.intentos,mn=r.mate_niveles!==undefined?r.mate_niveles:r.niveles_completados;
   if(mi>=4&&mi>mn*2.5)return '<span class="etq alerta">Se está atorando en Mate</span>';
   if(d>=5)return '<span class="etq alerta">Sin actividad</span>';
@@ -387,7 +396,7 @@ function seccionMat(titulo,es){
   return `<h2 class="${es?'tit-e':'tit-m'}">${titulo}</h2>
   ${det.length?`<p class="resum-sec"><b>${pas}</b> nivel${pas===1?'':'es'} pasado${pas===1?'':'s'} · <b>${est}</b> ★ · <b>${itn}</b> intento${itn===1?'':'s'}</p>
   <table class="t"><thead><tr><th class="${es?'ge':'gm'}">Tema</th><th class="${es?'ge':'gm'}">Nivel</th><th class="${es?'ge':'gm'}">Estado</th><th class="${es?'ge':'gm'}">Mejor</th><th class="${es?'ge':'gm'}">★</th><th class="${es?'ge':'gm'}">Intentos</th></tr></thead><tbody>
-  ${det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':'<span class="etq gris">En práctica</span>'}</td><td>${d.mejor}/${d.total||CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
+  ${det.map(d=>{const m=mod(d.modulo);return `<tr><td>${esc(m?m.titulo:d.modulo)}</td><td>${d.nivel}</td><td>${d.completado?'<span class="etq ok">Pasado</span>':(d.bloqueado?`<span class="etq alerta">🔒 Bloqueado</span> <button class="btn chico desb" data-m="${esc(d.modulo)}" data-n="${d.nivel}">Desbloquear</button>`:'<span class="etq gris">En práctica</span>')}</td><td>${d.mejor}/${d.total||CFG.TOTAL}</td><td>${d.estrellas}</td><td>${d.intentos}</td></tr>`;}).join('')}
   </tbody></table>`:'<p>Todavía no ha practicado aquí.</p>'}
   ${err.length?`<h3 class="sub-err">Errores más frecuentes</h3><table class="t"><thead><tr><th>Tema</th><th>Pregunta</th><th>Veces</th><th>Contestó</th><th>Correcta</th></tr></thead><tbody>${err.map(e=>{const m=mod(e.modulo);return `<tr><td>${esc(m?m.titulo:e.modulo)}</td><td>${esc(e.pregunta)}</td><td>${e.veces}</td><td>${esc(e.ultima_respuesta??'')}</td><td>${esc(e.correcta)}</td></tr>`;}).join('')}</tbody></table>`:''}`;
 }
@@ -490,6 +499,11 @@ function bind(){
   }
   if(p==='profedet'){
     on('#volverp',async()=>{await cargarResumen();S.pantalla='profepanel';render();});
+    $app.querySelectorAll('.desb').forEach(b=>b.onclick=async()=>{
+      try{await rpc('profe_desbloquear',{p_id:S.profe.alumno.alumno_id,p_modulo:b.dataset.m,p_nivel:Number(b.dataset.n)},S.profe.jwt);
+        S.profe.det=await rpc('profe_detalle',{p_id:S.profe.alumno.alumno_id},S.profe.jwt)||[];render();toast('Nivel desbloqueado');}
+      catch(e){toast('No se pudo desbloquear. ¿Ya corriste el SQL 07 en Supabase?');}
+    });
     on('#cpin',async()=>{
       const v=$app.querySelector('#npin').value.trim();
       if(!/^\d{4}$/.test(v)){toast('El PIN debe tener 4 números.');return;}
