@@ -299,7 +299,97 @@ const POLI=[{id:'poligonos',grupo:'geometria',titulo:'Polígonos',icono:'⬠',ni
  {n:5,nombre:'Reto de polígonos',recuerda:'Todo junto: vértices, lados, ángulos (rectos y hundidos), diagonales y si es convexo o cóncavo. Usa las pistas si las necesitas.',gen:polN5()}]}];
 
 
+
+// ---------- COORDENADAS (plano cartesiano) ----------
+const MEN='−',fc=n=>n<0?MEN+(-n):String(n),par=(x,y)=>`(${fc(x)}, ${fc(y)})`;
+function svgPlano(v){
+  const x0=v.x0,x1=v.x1,y0=v.y0,y1=v.y1,cs=v.cs||28,m=26,W=(x1-x0)*cs+2*m,H=(y1-y0)*cs+2*m;
+  const X=x=>m+(x-x0)*cs,Y=y=>m+(y1-y)*cs;
+  let s=`<svg class="poli plano" viewBox="0 0 ${W} ${H}" role="img" aria-label="Plano cartesiano"><rect x="${m}" y="${m}" width="${W-2*m}" height="${H-2*m}" fill="#fffaf0" stroke="#cdbf9c" stroke-width="1.5"/>`;
+  for(let x=x0;x<=x1;x++)s+=`<line x1="${X(x)}" y1="${m}" x2="${X(x)}" y2="${H-m}" stroke="#e3dac4" stroke-width="1.2"/>`;
+  for(let y=y0;y<=y1;y++)s+=`<line x1="${m}" y1="${Y(y)}" x2="${W-m}" y2="${Y(y)}" stroke="#e3dac4" stroke-width="1.2"/>`;
+  s+=`<line x1="${m-6}" y1="${Y(0)}" x2="${W-m+8}" y2="${Y(0)}" stroke="#202522" stroke-width="2.6"/><line x1="${X(0)}" y1="${H-m+6}" x2="${X(0)}" y2="${m-8}" stroke="#202522" stroke-width="2.6"/>`;
+  s+=`<text x="${W-6}" y="${Y(0)-7}" text-anchor="end" font-size="15" font-weight="800" font-style="italic" fill="#771d39" font-family="sans-serif">x</text><text x="${X(0)+8}" y="13" font-size="15" font-weight="800" font-style="italic" fill="#771d39" font-family="sans-serif">y</text>`;
+  const ty=(y0===0)?Y(0)+15:Y(0)+15,tx=X(0)-7;
+  for(let x=x0;x<=x1;x++){if(x===0)continue;s+=`<text x="${X(x)}" y="${ty}" text-anchor="middle" font-size="11.5" fill="#4a5550" font-family="sans-serif">${fc(x)}</text>`;}
+  for(let y=y0;y<=y1;y++){if(y===0)continue;s+=`<text x="${tx}" y="${Y(y)+4}" text-anchor="end" font-size="11.5" fill="#4a5550" font-family="sans-serif">${fc(y)}</text>`;}
+  s+=`<text x="${tx}" y="${ty}" text-anchor="end" font-size="11.5" fill="#4a5550" font-family="sans-serif">0</text>`;
+  (v.lineas||[]).forEach(([a,c])=>{s+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(c[0])}" y2="${Y(c[1])}" stroke="#1f2d86" stroke-width="2.6" stroke-dasharray="6 5"/>`;});
+  (v.pts||[]).forEach(p=>{s+=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="6.5" fill="${p.c||'#ec5923'}" stroke="#fff" stroke-width="2"/>`+(p.l?`<text x="${X(p.x)+9}" y="${Y(p.y)-8}" font-size="17" font-weight="800" fill="#1f2d86" font-family="sans-serif">${p.l}</text>`:'');});
+  return s+'</svg>';
+}
+window.svgPlano=svgPlano;
+const GR1={x0:0,x1:10,y0:0,y1:10},GR4={x0:-6,x1:6,y0:-6,y1:6};
+const dist4=(c,x,lim)=>{ // 3 distractores distintos de la respuesta
+  const ok=new Set([c]),out=[];
+  for(const [a,b] of x){const t=par(a,b);if(!ok.has(t)&&a>=lim[0]&&a<=lim[1]&&b>=lim[0]&&b<=lim[1]){ok.add(t);out.push(t);}if(out.length===3)break;}
+  return out;
+};
+function opts4(cx,cy,cands,lim){ // arma 4 opciones barajadas con la correcta
+  const c=par(cx,cy),d=dist4(c,cands,lim);let g=0;
+  while(d.length<3&&g++<200){const a=R(lim[0],lim[1]),b=R(lim[0],lim[1]),t=par(a,b);if(t!==c&&!d.includes(t))d.push(t);}
+  const o=shuffle([c,...d]);return {opciones:o,resp:o.indexOf(c)};
+}
+const U=fn=>unicas(10,()=>{let p,g=0;do{p=fn();}while(p.bad&&g++<500);return p;});
+function ptsAB(P){return P.map((p,i)=>({x:p[0],y:p[1],l:'ABCD'[i]}));}
+// --- primer cuadrante
+function c1N1(){return ()=>U(()=>{const x=R(1,9),y=R(1,9);if(x===y)return {bad:1,k:'n'+Math.random()};
+  const ex=R(0,1)===0;
+  return {vis:{tipo:'plano',...GR1,pts:[{x,y,l:'A'}]},q:ex?'Punto A: ¿cuánto vale x?':'Punto A: ¿cuánto vale y?',det:`${ex?'x':'y'} del punto A ${par(x,y)}`,resp:ex?x:y,k:`c1a${x},${y},${ex}`,
+    pista:ex?`x es el lugar en el eje horizontal (→). Baja desde A hasta ese eje: cae en el ${x}. Entonces x = ${x}.`:`y es el lugar en el eje vertical (↑). Ve desde A hacia la izquierda hasta ese eje: llega al ${y}. Entonces y = ${y}.`};});}
+function c1N2(){return ()=>U(()=>{const x=R(1,9),y=R(1,9);if(x===y)return {k:'n'+Math.random(),bad:1};
+  const o=opts4(x,y,[[y,x],[x,y+1],[x,y-1],[x+1,y],[x-1,y],[x+1,y+1]],[0,10]);
+  return {vis:{tipo:'plano',...GR1,pts:[{x,y,l:'A'}]},q:'¿Cuáles son las coordenadas del punto A?',det:`punto A ${par(x,y)}`,opciones:o.opciones,resp:o.resp,k:`c1b${x},${y}`,
+    pista:`Primero se lee x (cuánto avanzas → desde el 0) y después y (cuánto subes ↑). A está en x = ${x}, y = ${y}: ${par(x,y)}.`};});}
+function c1N3(){return ()=>U(()=>{const a=R(2,8),b=R(2,8);if(a===b)return {bad:1,k:'n'+Math.random()};
+  const P=shuffle([[a,b],[b,a],[a,b+1>9?b-1:b+1],[a+1>9?a-1:a+1,b]]),i=P.findIndex(p=>p[0]===a&&p[1]===b);
+  return {vis:{tipo:'plano',x0:0,x1:10,y0:0,y1:10,pts:ptsAB(P)},q:`¿Cuál punto está en ${par(a,b)}?`,det:`ubicar ${par(a,b)} [respuesta ${'ABCD'[i]}]`,opciones:['A','B','C','D'],resp:i,k:`c1c${a},${b},${P.join(';')}`,
+    pista:`Empieza en el 0. Avanza ${a} a la derecha (→) y luego sube ${b} (↑). Ahí está el punto ${'ABCD'[i]}.`};});}
+function c1N4(){return ()=>U(()=>{
+  if(R(0,1)){const hor=R(0,1),f=R(1,9),a=R(1,8),b=R(a+1,9),A=hor?[a,f]:[f,a],B=hor?[b,f]:[f,b];
+    return {vis:{tipo:'plano',...GR1,pts:ptsAB([A,B]),lineas:[[A,B]]},q:'¿Cuántas unidades hay de A a B?',det:`distancia A${par(...A)} a B${par(...B)}`,resp:b-a,k:`c1d${A},${B}`,
+      pista:`A y B están en la misma ${hor?'fila (y igual)':'columna (x igual)'}. Resta los números que cambian: ${b} − ${a} = ${b-a}. También puedes contar los cuadritos.`};}
+  const x1=R(1,6),x2=R(x1+2,9),y1=R(1,6),y2=R(y1+2,9);if(x1===y2)return {bad:1,k:'n'+Math.random()};
+  const A=[x1,y1],B=[x2,y1],C=[x2,y2],o=opts4(x1,y2,[[y2,x1],[x2,y2],[x1,y1],[x1+1,y2]],[0,10]);
+  return {vis:{tipo:'plano',...GR1,pts:ptsAB([A,B,C]),lineas:[[A,B],[B,C]]},q:'A, B y C son tres vértices de un rectángulo. ¿Dónde está el vértice D?',det:`rectángulo A${par(...A)} B${par(...B)} C${par(...C)}`,opciones:o.opciones,resp:o.resp,k:`c1e${A},${B},${C}`,
+    pista:`D está arriba de A (misma x = ${x1}) y a la izquierda de C (misma y = ${y2}). Entonces D = ${par(x1,y2)}.`};});}
+function movTxt(dx,dy){const h=dx?`${Math.abs(dx)} ${dx>0?'a la derecha':'a la izquierda'}`:'',v=dy?`${Math.abs(dy)} ${dy>0?'hacia arriba':'hacia abajo'}`:'';return h&&v?`${h} y ${v}`:(h||v);}
+function movQ(lim,gr,tag){return ()=>{const x=R(lim[0],lim[1]),y=R(lim[0],lim[1]);let dx=R(-5,5),dy=R(-5,5);
+  if(!dx||!dy||Math.abs(dx)===Math.abs(dy))return {bad:1,k:'n'+Math.random()};
+  const nx=x+dx,ny=y+dy;if(nx<lim[0]||nx>lim[1]||ny<lim[0]||ny>lim[1])return {bad:1,k:'n'+Math.random()};
+  const o=opts4(nx,ny,[[x+dy,y+dx],[nx,y],[x,ny],[x-dx,y-dy],[x+dx,y-dy],[x-dx,y+dy]],lim);
+  return {vis:{tipo:'plano',...gr,pts:[{x,y,l:'A'}]},q:`Sales de A ${par(x,y)} y te mueves ${movTxt(dx,dy)}. ¿Dónde llegas?`,det:`mover A${par(x,y)} ${movTxt(dx,dy)}`,opciones:o.opciones,resp:o.resp,k:`${tag}${x},${y},${dx},${dy}`,
+    pista:`Mover a la derecha suma a x; a la izquierda resta. Hacia arriba suma a y; hacia abajo resta. x: ${fc(x)} ${dx>0?'+':'−'} ${Math.abs(dx)} = ${fc(nx)}. y: ${fc(y)} ${dy>0?'+':'−'} ${Math.abs(dy)} = ${fc(ny)}.`};};}
+function c1N5(){const g=movQ([0,10],GR1,'c1f');return ()=>U(g);}
+// --- cuatro cuadrantes
+const CUAD=['I','II','III','IV'],cuadDe=(x,y)=>x>0&&y>0?0:(x<0&&y>0?1:(x<0&&y<0?2:3));
+const SIG=['x positivo y y positivo (derecha y arriba)','x negativo y y positivo (izquierda y arriba)','x negativo y y negativo (izquierda y abajo)','x positivo y y negativo (derecha y abajo)'];
+function c4N1(){return ()=>U(()=>{const x=R(1,6)*(R(0,1)?1:-1),y=R(1,6)*(R(0,1)?1:-1),c=cuadDe(x,y),dib=R(0,2)>0;
+  return {vis:{tipo:'plano',...GR4,pts:dib?[{x,y,l:'A'}]:[]},q:dib?'¿En qué cuadrante está el punto A?':`¿En qué cuadrante está el punto ${par(x,y)}?`,det:`cuadrante de ${par(x,y)}`,opciones:CUAD,resp:c,k:`c4a${x},${y},${dib}`,
+    pista:`Fíjate en los signos. Aquí hay ${SIG[c]}: cuadrante ${CUAD[c]}. (I: derecha-arriba · II: izquierda-arriba · III: izquierda-abajo · IV: derecha-abajo.)`};});}
+function c4N2(){return ()=>U(()=>{const x=R(-6,6),y=R(-6,6);if(!x||!y||Math.abs(x)===Math.abs(y))return {bad:1,k:'n'+Math.random()};
+  const o=opts4(x,y,[[y,x],[-x,y],[x,-y],[-x,-y]],[-6,6]);
+  return {vis:{tipo:'plano',...GR4,pts:[{x,y,l:'A'}]},q:'¿Cuáles son las coordenadas del punto A?',det:`punto A ${par(x,y)}`,opciones:o.opciones,resp:o.resp,k:`c4b${x},${y}`,
+    pista:`x: ${x>0?'a la derecha del 0':'a la izquierda del 0'} → ${fc(x)}. y: ${y>0?'arriba del 0':'abajo del 0'} → ${fc(y)}. Primero x y luego y: ${par(x,y)}.`};});}
+function c4N3(){return ()=>U(()=>{const a=R(-5,5),b=R(-5,5);if(!a||!b||Math.abs(a)===Math.abs(b))return {bad:1,k:'n'+Math.random()};
+  const P=shuffle([[a,b],[-a,b],[a,-b],[b,a]]),i=P.findIndex(p=>p[0]===a&&p[1]===b);
+  return {vis:{tipo:'plano',...GR4,pts:ptsAB(P)},q:`¿Cuál punto está en ${par(a,b)}?`,det:`ubicar ${par(a,b)} [respuesta ${'ABCD'[i]}]`,opciones:['A','B','C','D'],resp:i,k:`c4c${a},${b},${P.join(';')}`,
+    pista:`Desde el 0: ${Math.abs(a)} ${a>0?'a la derecha':'a la izquierda'} y luego ${Math.abs(b)} ${b>0?'hacia arriba':'hacia abajo'}. Ahí está el punto ${'ABCD'[i]}.`};});}
+function c4N4(){const g=movQ([-6,6],GR4,'c4d');return ()=>U(g);}
+const COORD=[
+ {id:'coord-1',grupo:'geometria',titulo:'Coordenadas (1.er cuadrante)',icono:'(3, 5)',niveles:[
+  {n:1,nombre:'¿Cuánto vale x? ¿Cuánto vale y?',recuerda:'Un punto se ubica con dos números: x dice cuánto avanzas a la derecha (→) y y dice cuánto subes (↑). Ejemplo: el punto (3, 5) está 3 a la derecha y 5 arriba.',gen:c1N1()},
+  {n:2,nombre:'Leer las coordenadas de un punto',recuerda:'Se escribe primero x y después y, entre paréntesis y separados por coma: (x, y). No es lo mismo (2, 5) que (5, 2).',gen:c1N2()},
+  {n:3,nombre:'Ubicar un punto',recuerda:'Para ubicar (a, b): empieza en el 0, avanza a lugares a la derecha y sube b lugares. ¡Cuidado con el orden!',gen:c1N3()},
+  {n:4,nombre:'Distancias y vértices',recuerda:'Si dos puntos tienen la misma y, están en una fila: la distancia es la resta de sus x. Si tienen la misma x, están en una columna: resta sus y. En un rectángulo, los lados opuestos comparten x o y.',gen:c1N4()},
+  {n:5,nombre:'Moverse en el plano',recuerda:'Derecha: x aumenta. Izquierda: x disminuye. Arriba: y aumenta. Abajo: y disminuye. Ejemplo: de (2, 3), 4 a la derecha y 1 arriba llegas a (6, 4).',gen:c1N5()}]},
+ {id:'coord-4',grupo:'geometria',titulo:'Coordenadas (cuatro cuadrantes)',icono:'(−2, 4)',niveles:[
+  {n:1,nombre:'Los cuadrantes',recuerda:'Los ejes dividen el plano en 4 cuadrantes. I: x+ y+ (derecha-arriba). II: x− y+ (izquierda-arriba). III: x− y− (izquierda-abajo). IV: x+ y− (derecha-abajo).',gen:c4N1()},
+  {n:2,nombre:'Leer coordenadas con signo',recuerda:'x negativo es a la izquierda del 0; y negativo es abajo del 0. Siempre se escribe (x, y). Ejemplo: 3 a la izquierda y 2 abajo es (−3, −2).',gen:c4N2()},
+  {n:3,nombre:'Ubicar puntos con signo',recuerda:'Desde el 0, el signo de x te dice izquierda o derecha, y el signo de y te dice abajo o arriba. Cambiar un signo cambia de cuadrante.',gen:c4N3()},
+  {n:4,nombre:'Moverse cruzando los ejes',recuerda:'Derecha suma a x, izquierda resta. Arriba suma a y, abajo resta. Puedes cruzar el cero y cambiar de cuadrante. Ejemplo: de (−2, 1), 3 a la derecha y 4 abajo llegas a (1, −3).',gen:c4N4()}]}];
+
 OPS.forEach(m=>m.grupo='operaciones');
-window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI];
+window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI,...COORD];
 window.R=R;window.fmtNum=fmt;
 })();

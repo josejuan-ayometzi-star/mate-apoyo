@@ -298,6 +298,7 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 .club{text-align:center;font:800 20px var(--letra);color:var(--sol);letter-spacing:.8px;margin:10px 0 0;text-shadow:0 2px 0 rgba(0,0,0,.4)}
 .q-box:has(.poli){gap:6px;align-content:center}
 .poli{width:min(100%,400px);height:auto;display:block;margin:0 auto}
+.poli.plano{width:min(100%,430px)}
 .poli.tres{width:min(100%,520px)}
 .q-peq{font-size:30px!important;margin-top:4px;line-height:1.2}
 .opm{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:16px 0 8px}

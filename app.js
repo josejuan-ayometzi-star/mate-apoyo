@@ -172,6 +172,7 @@ function vis(p){
   const v=p.vis;
   if(v.tipo==='col'){const a=String(v.a),b=String(v.b);return `<div class="col"><div class="r"><span>${a}</span></div><div class="r"><span class="op">${v.op}</span><span>${b}</span></div><div class="raya"></div></div>`;}
   if(v.tipo==='poli')return window.svgPoli(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
+  if(v.tipo==='plano')return window.svgPlano(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='poli3')return window.svgPoli3(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='esc'){return `<div class="esc">${v.sim.map((u,k)=>`<span class="${k===v.desde?'de':(k===v.hasta?'a':'')}">${u}</span>`).join('')}</div><div class="q-linea">${esc(p.q)}</div>`;}
   if(v.tipo==='div'){return `<div class="galera"><span class="dv">${v.divisor}</span><span class="dd">${v.dividendo}</span></div>`;}
