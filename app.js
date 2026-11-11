@@ -140,6 +140,8 @@ function vHome(){
   <div class="grid g-mod">${meds.map(tarjetaMod).join('')}</div>
   <h2>Geometría</h2>
   <div class="grid g-mod">${geo.map(tarjetaMod).join('')}</div>
+  <h2>Funciones</h2>
+  <div class="grid g-mod">${window.MODULOS.filter(m=>m.grupo==='funciones').map(tarjetaMod).join('')}</div>
   <h2>Herramientas</h2>
   <div class="grid g-mod"><button class="mod" data-herr="recta"><div class="ic">−2+5</div><div class="ti">Saltos en la recta</div><div class="pr">Sumas y restas con números negativos</div></button></div>`;
 }
@@ -172,6 +174,7 @@ function vis(p){
   const v=p.vis;
   if(v.tipo==='col'){const a=String(v.a),b=String(v.b);return `<div class="col"><div class="r"><span>${a}</span></div><div class="r"><span class="op">${v.op}</span><span>${b}</span></div><div class="raya"></div></div>`;}
   if(v.tipo==='poli')return window.svgPoli(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
+  if(v.tipo==='tabla')return `<div class="fmaq"><span>Entrada</span><b>⚙️ Regla: ${esc(v.regla)}</b><span>Salida</span></div><table class="ftab"><tr><th>Entrada</th>${v.ent.map(x=>`<td class="${x==='?'?'int':''}">${x}</td>`).join('')}</tr><tr><th>Salida</th>${v.sal.map(x=>`<td class="${x==='?'?'int':''}">${x}</td>`).join('')}</tr></table><div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='plano')return window.svgPlano(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='poli3')return window.svgPoli3(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='esc'){return `<div class="esc">${v.sim.map((u,k)=>`<span class="${k===v.desde?'de':(k===v.hasta?'a':'')}">${u}</span>`).join('')}</div><div class="q-linea">${esc(p.q)}</div>`;}

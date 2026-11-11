@@ -315,3 +315,14 @@ textarea#wIn{text-align:left;font-size:22px;font-weight:600;resize:vertical}
 .tit-m{border-left:8px solid var(--naranja);padding-left:10px} .tit-e{border-left:8px solid var(--verde);padding-left:10px}
 .resum-sec{color:var(--gis);margin:4px 0 8px;font-size:18px} .resum-sec b{color:var(--sol)}
 h3.sub-err{color:var(--gis);font-size:18px;margin:14px 0 6px}
+
+/* funciones: tabla entrada/salida */
+.fmaq{display:flex;justify-content:center;align-items:center;gap:14px;margin:2px auto 8px}
+.fmaq span{display:none}
+.fmaq b{background:var(--azul);color:#fff;padding:8px 18px;border-radius:14px;font:800 24px var(--letra)}
+.ftab{border-collapse:separate;border-spacing:6px;margin:0 auto 6px}
+.ftab th{font:800 16px var(--letra);color:var(--vino);text-align:right;padding-right:8px}
+.ftab td{min-width:64px;height:56px;text-align:center;font:800 30px var(--letra);background:var(--papel2);color:var(--tinta);border-radius:12px;padding:0 10px}
+.ftab td.int{background:var(--sol);color:var(--vino)}
+.q-box:has(.ftab){gap:6px;align-content:center}
+@media(max-width:600px){.ftab td{min-width:48px;height:48px;font-size:24px}.fmaq b{font-size:19px}}

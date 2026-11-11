@@ -389,7 +389,60 @@ const COORD=[
   {n:3,nombre:'Ubicar puntos con signo',recuerda:'Desde el 0, el signo de x te dice izquierda o derecha, y el signo de y te dice abajo o arriba. Cambiar un signo cambia de cuadrante.',gen:c4N3()},
   {n:4,nombre:'Moverse cruzando los ejes',recuerda:'Derecha suma a x, izquierda resta. Arriba suma a y, abajo resta. Puedes cruzar el cero y cambiar de cuadrante. Ejemplo: de (−2, 1), 3 a la derecha y 4 abajo llegas a (1, −3).',gen:c4N4()}]}];
 
+// ---------- FUNCIONES (entrada → regla → salida) ----------
+const FR={
+  '+':a=>({t:'+ '+a,p:'suma '+a,f:x=>x+a}),
+  '−':a=>({t:'− '+a,p:'resta '+a,f:x=>x-a}),
+  '×':a=>({t:'× '+a,p:'multiplica por '+a,f:x=>x*a}),
+  '÷':a=>({t:'÷ '+a,p:'divide entre '+a,f:x=>x/a}),
+  '×+':(a,c)=>({t:'× '+a+' + '+c,p:'multiplica por '+a+' y luego suma '+c,f:x=>x*a+c}),
+  '×−':(a,c)=>({t:'× '+a+' − '+c,p:'multiplica por '+a+' y luego resta '+c,f:x=>x*a-c})};
+function reglaR(tipos){const t=pick(tipos),a=t==='+'||t==='−'||t==='×'?R(2,9):(t==='÷'?R(2,5):R(2,5)),c=t==='×−'?R(1,2*a-1):R(1,9);
+  const r=FR[t](a,c);r.k=t+a+','+c;r.tipo=t;r.a=a;r.c=c;return r;}
+function xsPara(r,n){
+  if(r.tipo==='÷')return shuffle([1,2,3,4,5,6,7,8,9,10]).slice(0,n).sort((u,v)=>u-v).map(v=>v*r.a);
+  const d=R(1,3),s=r.tipo==='−'?R(r.a,r.a+4):(r.tipo==='×−'?R(2,5):R(1,6));
+  return Array.from({length:n},(_,i)=>s+i*d);}
+const visTab=(xs,ys,regla,qx,qy)=>({tipo:'tabla',regla,ent:xs.map((v,i)=>qx.includes(i)?'?':v),sal:ys.map((v,i)=>qy.includes(i)?'?':v)});
+function fN1(){return ()=>U(()=>{const r=reglaR(['+','−','×','÷']),xs=xsPara(r,3),ys=xs.map(r.f);
+  return {vis:visTab(xs,ys,r.t,[],[2]),q:`Regla: ${r.t} (${r.p}). ¿Qué número va en lugar del ?`,det:`regla ${r.t}, entrada ${xs[2]}`,resp:ys[2],k:'f1'+r.k+xs,
+    pista:`Aplica la regla a la entrada ${xs[2]}: ${r.p}. ${xs[2]} ${r.t} = ${ys[2]}.`};});}
+function fN2(){return ()=>U(()=>{const r=reglaR(['×+','×−']),xs=xsPara(r,3),ys=xs.map(r.f);
+  return {vis:visTab(xs,ys,r.t,[],[2]),q:`Regla: ${r.t} (${r.p}). ¿Qué número va en lugar del ?`,det:`regla ${r.t}, entrada ${xs[2]}`,resp:ys[2],k:'f2'+r.k+xs,
+    pista:`Son dos pasos, en orden. Con ${xs[2]}: ${xs[2]} × ${r.a} = ${xs[2]*r.a}; luego ${r.tipo==='×+'?'+':'−'} ${r.c} = ${ys[2]}.`};});}
+function fN3(){return ()=>U(()=>{const T=['+','−','×','×+','×−'],r=reglaR(T),xs=xsPara(r,4),ys=xs.map(r.f),cand=[];
+  for(let g=0;g<80&&cand.length<3;g++){const o=reglaR(T);if(o.t!==r.t&&!cand.some(c=>c.t===o.t)&&!xs.every((x,i)=>o.f(x)===ys[i]))cand.push(o);}
+  if(cand.length<3)return {bad:1,k:'n'+Math.random()};
+  const o=shuffle([r,...cand]);
+  return {vis:visTab(xs,ys,'?',[],[]),q:'¿Cuál es la regla de esta máquina?',det:`regla ${r.t} [${xs.map((x,i)=>x+'→'+ys[i]).join(', ')}]`,opciones:o.map(z=>z.t),resp:o.indexOf(r),k:'f3'+r.k+xs,
+    pista:`Prueba con la primera pareja (${xs[0]} → ${ys[0]}) y luego comprueba con las demás: la regla debe funcionar en todas. Aquí es ${r.t}.`};});}
+function fN4(){return ()=>U(()=>{const r=reglaR(['+','−','×','÷','×+','×−']),xs=xsPara(r,3),ys=xs.map(r.f);
+  const dos=r.tipo==='×+'||r.tipo==='×−';
+  return {vis:visTab(xs,ys,r.t,[2],[]),q:`Regla: ${r.t}. Salió ${ys[2]}. ¿Qué número entró (el ?)`,det:`regla ${r.t}, salida ${ys[2]}`,resp:xs[2],k:'f4'+r.k+xs,
+    pista:dos?`Haz el camino al revés. Deshaz primero lo último: ${ys[2]} ${r.tipo==='×+'?'− '+r.c:'+ '+r.c} = ${ys[2]+(r.tipo==='×+'?-r.c:r.c)}. Luego deshaz la multiplicación: ${ys[2]+(r.tipo==='×+'?-r.c:r.c)} ÷ ${r.a} = ${xs[2]}.`
+      :`Haz lo contrario de la regla: ${ys[2]} ${({'+':'−','−':'+','×':'÷','÷':'×'})[r.tipo]} ${r.a} = ${xs[2]}.`};});}
+const OBJ=[['cuaderno','cuadernos'],['lápiz','lápices'],['paleta','paletas'],['boleto','boletos'],['bolsa de fruta','bolsas de fruta'],['libro','libros']];
+function fN5(){return ()=>U(()=>{const j=R(0,3),xs=[1,2,3];
+  if(j===0){const [s,p]=pick(OBJ),k=R(3,15),n=R(6,12);
+    return {vis:visTab(xs,xs.map(x=>x*k),'?',[],[]),q:`Cada ${s} cuesta $${k}. ¿Cuánto cuestan ${n} ${p}?`,det:`${s} $${k}, ${n}`,resp:k*n,k:'f5a'+k+','+n,
+      pista:`Cada ${s} cuesta $${k}, así que la regla es × ${k}. Para ${n}: ${n} × ${k} = ${k*n}.`};}
+  if(j===1){const b=R(5,20),k=R(2,9),n=R(5,12);
+    return {vis:visTab(xs,xs.map(x=>x*k+b),'?',[],[]),q:`Un taxi cobra $${b} de bajada y $${k} por cada kilómetro. ¿Cuánto se paga por ${n} km?`,det:`taxi bajada ${b}, km ${k}, ${n}`,resp:k*n+b,k:'f5b'+b+','+k+','+n,
+      pista:`La regla es × ${k} + ${b}: se multiplican los km por ${k} y se suma la bajada. ${n} × ${k} = ${n*k}; ${n*k} + ${b} = ${k*n+b}.`};}
+  if(j===2){const k=R(3,9),n=R(5,11);
+    return {vis:visTab(xs,xs.map(x=>x*k),'?',[],[]),q:`Cada mesa tiene ${k} sillas. En el salón hay ${k*n} sillas en mesas. ¿Cuántas mesas hay?`,det:`${k} sillas por mesa, ${k*n} sillas`,resp:n,k:'f5c'+k+','+n,
+      pista:`La regla es mesas × ${k} = sillas. Al revés: ${k*n} ÷ ${k} = ${n}.`};}
+  const [s,p]=pick(OBJ),k=R(4,12),n=R(5,10);
+  return {vis:visTab(xs,xs.map(x=>x*k),'?',[],[]),q:`Cada ${s} cuesta $${k}. Con $${k*n}, ¿cuántos ${p} puedes comprar?`,det:`${s} $${k}, tengo ${k*n}`,resp:n,k:'f5d'+k+','+n,
+    pista:`Cada ${s} cuesta $${k}. Divide el dinero entre el precio: ${k*n} ÷ ${k} = ${n}.`};});}
+const FUN=[{id:'func-1',grupo:'funciones',titulo:'Funciones: máquina de reglas',icono:'x → y',niveles:[
+  {n:1,nombre:'Aplica la regla',recuerda:'Una función es una máquina: entra un número, la regla lo transforma y sale otro. Si la regla es × 3, entra 4 y sale 12.',gen:fN1()},
+  {n:2,nombre:'Reglas de dos pasos',recuerda:'Algunas reglas tienen dos pasos y se hacen en orden. Regla × 2 + 1: entra 5 → 5 × 2 = 10 → 10 + 1 = 11.',gen:fN2()},
+  {n:3,nombre:'Descubre la regla',recuerda:'Para descubrir la regla, mira cómo cambia el número de la primera pareja y comprueba con las demás. La regla correcta funciona en todas las parejas.',gen:fN3()},
+  {n:4,nombre:'¿Qué número entró?',recuerda:'Para encontrar la entrada, haz el camino al revés: lo contrario de sumar es restar y lo contrario de multiplicar es dividir. Si × 3 + 2 dio 17: 17 − 2 = 15 y 15 ÷ 3 = 5.',gen:fN4()},
+  {n:5,nombre:'Funciones en problemas',recuerda:'En un problema, busca la regla en la tabla (por ejemplo, × precio, o × tarifa + cuota fija) y aplícala. Si te dan el resultado, regresa por el camino contrario.',gen:fN5()}]}];
+
 OPS.forEach(m=>m.grupo='operaciones');
-window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI,...COORD];
+window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI,...COORD,...FUN];
 window.R=R;window.fmtNum=fmt;
 })();
