@@ -139,7 +139,13 @@ function vHome(){
   <h2>Medidas</h2>
   <div class="grid g-mod">${meds.map(tarjetaMod).join('')}</div>
   <h2>Geometría</h2>
-  <div class="grid g-mod">${geo.map(tarjetaMod).join('')}</div>`;
+  <div class="grid g-mod">${geo.map(tarjetaMod).join('')}</div>
+  <h2>Herramientas</h2>
+  <div class="grid g-mod"><button class="mod" data-herr="recta"><div class="ic">−2+5</div><div class="ti">Saltos en la recta</div><div class="pr">Sumas y restas con números negativos</div></button></div>`;
+}
+function vRecta(){
+  return `${top(`<button class="btn sec chico" id="volvermate">← Matemáticas</button>`)}
+  <h1>Saltos en la recta</h1><p class="sub-h">Escribe una suma o resta, coloca la ficha y da los saltos.</p>${window.RECTA.html()}`;
 }
 function recuerdaEsp(m){
   if(m.grupo==='orto')return `<b>Recuerda las reglas:</b><ul class="reglas">${m.reglas.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`;
@@ -418,7 +424,7 @@ function vProfeDetalle(){
 // ---------- render + eventos ----------
 function render(){
   const p=S.pantalla;
-  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle}[p];
+  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle,recta:vRecta}[p];
   const cambio=S.ultPantalla!==p;S.ultPantalla=p;
   $app.className=cambio?'nueva':'';
   $app.innerHTML=v()+((p==='juego'||p==='juegoesp')?'':pie());bind();
@@ -445,8 +451,13 @@ function bind(){
     on('#materias',()=>{S.pantalla='materias';render();});
     $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
+  if(p==='recta'){
+    on('#volvermate',()=>{window.RECTA.parar();S.pantalla='home';render();});
+    window.RECTA.iniciar($app.querySelector('#rc'));
+  }
   if(p==='home'){
     on('#materias',()=>{S.pantalla='materias';render();});
+    $app.querySelectorAll('[data-herr="recta"]').forEach(b=>b.onclick=()=>{S.pantalla='recta';render();});
     $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
   if(p==='niveles'){
