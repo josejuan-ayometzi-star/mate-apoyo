@@ -121,7 +121,13 @@ function vEspanol(){
   <h1>Español</h1><p class="sub-h">Elige qué practicar hoy.</p>
   <h2>Ortografía: letras</h2>
   <div class="tablas">${orto.map(tileEsp).join('')}</div>
-  <h2>Programa P.E.P.E.</h2>${rondas}`;
+  <h2>Programa P.E.P.E.</h2>${rondas}
+  <h2>Herramientas</h2>
+  <div class="grid g-mod"><button class="mod" data-herr="cuento"><div class="ic">✍️</div><div class="ti">Revisor de cuentos</div><div class="pr">Escribe tu cuento y recibe sugerencias para mejorarlo</div></button></div>`;
+}
+function vCuento(){
+  return `${top(`<button class="btn sec chico" id="volveresp">← Español</button>`)}
+  <h1>Revisor de cuentos</h1><p class="sub-h">Escribe tu cuento y recibe sugerencias. Tu cuento no se guarda en ningún lugar.</p>${window.REVISOR.html()}`;
 }
 function tarjetaMod(m){const r=resumenMod(m);return `<button class="mod" data-m="${m.id}"><div class="ic">${m.icono}</div><div class="ti">${m.titulo}</div><div class="pr">${r.h} de ${r.tot} niveles</div><div class="prog"><i style="width:${r.h/r.tot*100}%"></i></div></button>`;}
 function vHome(){
@@ -431,7 +437,9 @@ function vProfeDetalle(){
 // ---------- render + eventos ----------
 function render(){
   const p=S.pantalla;
-  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle,recta:vRecta}[p];
+  if(p!=='cuento'&&window.REVISOR)window.REVISOR.parar(); // al salir, el cuento se borra de la memoria
+
+  const v={cargando:vCargando,login:vLogin,pin:vPin,materias:vMaterias,espanol:vEspanol,home:vHome,niveles:vNiveles,intro:vIntro,juego:vJuego,juegoesp:vJuegoEsp,resultado:vResultado,profelogin:vProfeLogin,profepanel:vProfePanel,profedet:vProfeDetalle,recta:vRecta,cuento:vCuento}[p];
   const cambio=S.ultPantalla!==p;S.ultPantalla=p;
   $app.className=cambio?'nueva':'';
   $app.innerHTML=v()+((p==='juego'||p==='juegoesp')?'':pie());bind();
@@ -454,8 +462,13 @@ function bind(){
     on('#salir',salir);
     $app.querySelectorAll('[data-materia]').forEach(b=>b.onclick=()=>{S.pantalla=b.dataset.materia==='mate'?'home':'espanol';render();});
   }
+  if(p==='cuento'){
+    on('#volveresp',()=>window.REVISOR.pedirSalida(()=>{S.pantalla='espanol';render();}));
+    window.REVISOR.iniciar($app.querySelector('#rv'),{token:S.token,nombre:S.nombre,sesionCaida});
+  }
   if(p==='espanol'){
     on('#materias',()=>{S.pantalla='materias';render();});
+    $app.querySelectorAll('[data-herr="cuento"]').forEach(b=>b.onclick=()=>{S.pantalla='cuento';render();});
     $app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mod=b.dataset.m;S.pantalla='niveles';render();});
   }
   if(p==='recta'){
