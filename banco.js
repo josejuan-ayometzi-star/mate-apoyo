@@ -442,7 +442,67 @@ const FUN=[{id:'func-1',grupo:'funciones',titulo:'Funciones: máquina de reglas'
   {n:4,nombre:'¿Qué número entró?',recuerda:'Para encontrar la entrada, haz el camino al revés: lo contrario de sumar es restar y lo contrario de multiplicar es dividir. Si × 3 + 2 dio 17: 17 − 2 = 15 y 15 ÷ 3 = 5.',gen:fN4()},
   {n:5,nombre:'Funciones en problemas',recuerda:'En un problema, busca la regla en la tabla (por ejemplo, × precio, o × tarifa + cuota fija) y aplícala. Si te dan el resultado, regresa por el camino contrario.',gen:fN5()}]}];
 
+// ---------- NÚMEROS NEGATIVOS ----------
+function svgRecta(v){
+  const lo=v.min,hi=v.max,cs=v.cs||26,m=22,W=(hi-lo)*cs+2*m,H=110,X=n=>m+(n-lo)*cs,y=62;
+  let s=`<svg class="poli recta" viewBox="0 0 ${W} ${H}" role="img" aria-label="Recta numérica"><rect x="${X(lo)-6}" y="${y-30}" width="${X(0)-X(lo)+6}" height="62" rx="9" fill="rgba(31,45,134,.08)"/><line x1="${X(lo)-10}" y1="${y}" x2="${X(hi)+10}" y2="${y}" stroke="#202522" stroke-width="2.6"/>`;
+  for(let n=lo;n<=hi;n++){const c=n===0;s+=`<line x1="${X(n)}" y1="${y-(c?10:6)}" x2="${X(n)}" y2="${y+(c?10:6)}" stroke="${c?'#ec5923':'#7a7f78'}" stroke-width="${c?3:1.5}"/>`;
+    if(n%v.cada===0||c)s+=`<text x="${X(n)}" y="${y+26}" text-anchor="middle" font-size="12" fill="${c?'#ec5923':'#4a5550'}" font-weight="${c?800:500}" font-family="sans-serif">${fc(n)}</text>`;}
+  (v.pts||[]).forEach(p=>{s+=`<circle cx="${X(p.v)}" cy="${y}" r="7" fill="#ec5923" stroke="#fff" stroke-width="2"/>`+(p.l?`<text x="${X(p.v)}" y="${y-14}" text-anchor="middle" font-size="18" font-weight="800" fill="#1f2d86" font-family="sans-serif">${p.l}</text>`:'');});
+  return s+'</svg>';
+}
+window.svgRecta=svgRecta;
+function optsN(r,cands,lo,hi){const o=[r];for(const c of cands){if(c!==r&&!o.includes(c)&&c>=lo&&c<=hi)o.push(c);if(o.length===4)break;}
+  let g=0;while(o.length<4&&g++<200){const c=r+R(-4,4);if(!o.includes(c)&&c>=lo&&c<=hi)o.push(c);}
+  const f=shuffle(o);return {opciones:f.map(fc),resp:f.indexOf(r)};}
+const RC=(a,c)=>({tipo:'recta',min:-10,max:10,cada:1,...(c||{}),pts:a});
+function nN1(){return ()=>U(()=>{
+  if(R(0,1)){const v=R(-9,9);if(!v)return {bad:1,k:'n'+Math.random()};const o=optsN(v,[-v,v+1,v-1,-v+1,-v-1],-10,10);
+    return {vis:RC([{v,l:'A'}]),q:'¿Qué número marca el punto A?',det:`punto A en ${fc(v)}`,opciones:o.opciones,resp:o.resp,k:'n1a'+v,
+      pista:`Cuenta desde el 0: el punto A está ${Math.abs(v)} lugar${Math.abs(v)>1?'es':''} a la ${v<0?'izquierda (negativos)':'derecha (positivos)'}. Es ${fc(v)}.`};}
+  const v=R(-9,9);if(!v)return {bad:1,k:'n'+Math.random()};
+  const P=shuffle([v,-v,v+(v>0?1:-1)*(Math.abs(v)<9?1:-1),-v+(v>0?-1:1)*(Math.abs(v)<9?1:-1)]);if(new Set(P).size<4||P.some(p=>Math.abs(p)>10||!p))return {bad:1,k:'n'+Math.random()};
+  const i=P.indexOf(v);
+  return {vis:RC(P.map((p,j)=>({v:p,l:'ABCD'[j]}))),q:`¿Cuál punto marca el ${fc(v)}?`,det:`ubicar ${fc(v)} [respuesta ${'ABCD'[i]}]`,opciones:['A','B','C','D'],resp:i,k:'n1b'+v+P,
+    pista:`${fc(v)} está ${Math.abs(v)} lugar${Math.abs(v)>1?'es':''} a la ${v<0?'izquierda':'derecha'} del 0.`};});}
+function nN2(){return ()=>U(()=>{const a=R(-9,9),b=R(-9,9);if(a===b)return {bad:1,k:'n'+Math.random()};
+  const may=R(0,1),r=may?Math.max(a,b):Math.min(a,b),o=shuffle([a,b]);
+  return {vis:RC([{v:a,l:''},{v:b,l:''}]),q:`¿Cuál número es ${may?'mayor':'menor'}: ${fc(a)} o ${fc(b)}?`,det:`${may?'mayor':'menor'} entre ${fc(a)} y ${fc(b)}`,opciones:[fc(a),fc(b)],resp:r===a?0:1,k:'n2'+a+','+b+may,
+    pista:`En la recta, el número que está más a la derecha es el mayor y el que está más a la izquierda es el menor. ${fc(Math.max(a,b))} está a la derecha de ${fc(Math.min(a,b))}. Entre negativos, el que está más lejos del 0 es el menor.`};});}
+function nN3(){return ()=>U(()=>{const S=new Set();while(S.size<4)S.add(R(-9,9));const L=[...S],ord=[...L].sort((p,q)=>p-q),menor=R(0,1);
+  const r=menor?ord[0]:ord[3],f=shuffle(L);
+  return {vis:RC([]),q:`De estos números, ¿cuál es el ${menor?'menor':'mayor'}? ${L.map(fc).join('  ·  ')}`,det:`${menor?'menor':'mayor'} de ${L.map(fc).join(', ')}`,opciones:f.map(fc),resp:f.indexOf(r),k:'n3'+ord+menor,
+    pista:`Ordénalos de menor a mayor (de izquierda a derecha en la recta): ${ord.map(fc).join(' < ')}. El ${menor?'menor':'mayor'} es ${fc(r)}.`};});}
+function nN4(){return ()=>U(()=>{const a=R(-9,9),b=R(1,9),op=R(0,1)?'+':'−',r=op==='+'?a+b:a-b;if(Math.abs(r)>15||!a||(a>0&&op==='+')||(a>0&&a>=b&&op==='−'))return {bad:1,k:'n'+Math.random()};
+  const o=optsN(r,[-r,op==='+'?a-b:a+b,r+1,r-1,Math.abs(a)+b,Math.abs(a)-b],-18,18);
+  const cruz=(a<0&&r>0)||(a>0&&r<0);
+  return {vis:RC([{v:a,l:'A'}],{min:-12,max:12}),q:`${fc(a)} ${op==='+'?'+':'−'} ${b} = ?`,det:`${fc(a)} ${op} ${b}`,opciones:o.opciones,resp:o.resp,k:'n4'+a+op+b,
+    pista:`Empieza en ${fc(a)} y da ${b} salto${b>1?'s':''} a la ${op==='+'?'derecha (sumar)':'izquierda (restar)'}.${cruz?' Cruzas el cero.':''} Llegas a ${fc(r)}.`};});}
+function nN5(){return ()=>U(()=>{const j=R(0,3);
+  if(j===0){const t=R(-8,4),d=R(3,12),sube=R(0,1),r=sube?t+d:t-d;if(Math.abs(r)>15)return {bad:1,k:'n'+Math.random()};
+    const o=optsN(r,[-r,sube?t-d:t+d,r+1,r-1],-18,18);
+    return {vis:RC([{v:t,l:'hoy'}].filter(p=>Math.abs(p.v)<=12),{min:-12,max:12}),q:`En la madrugada hacía ${fc(t)} °C y la temperatura ${sube?'subió':'bajó'} ${d} grados. ¿Cuántos grados hay ahora?`,det:`temp ${fc(t)} ${sube?'+':'−'} ${d}`,opciones:o.opciones,resp:o.resp,k:'n5a'+t+d+sube,
+      pista:`${sube?'Subir':'Bajar'} es moverse a la ${sube?'derecha':'izquierda'}: ${fc(t)} ${sube?'+':'−'} ${d} = ${fc(r)} °C.`};}
+  if(j===1){const p=R(-4,-1),s=R(2,9),r=p+s;
+    const o=optsN(r,[-r,p-s,r+1,r-1],-12,12);
+    return {vis:RC([],{min:-12,max:12}),q:`Un elevador está en el piso ${fc(p)} (sótano) y sube ${s} pisos. ¿En qué piso queda?`,det:`piso ${fc(p)} sube ${s}`,opciones:o.opciones,resp:o.resp,k:'n5b'+p+s,
+      pista:`Subir es sumar: ${fc(p)} + ${s} = ${fc(r)}. Si te pasas del cero, ya estás en pisos positivos.`};}
+  if(j===2){const h=R(-15,-4),s=R(2,h*-1-1)||2,r=h+s;
+    const o=optsN(r,[-r,h-s,r+1,r-1],-20,20);
+    return {vis:RC([],{min:-12,max:12}),q:`Un buzo está a ${fc(h)} metros (bajo el nivel del mar) y sube ${s} metros. ¿A qué profundidad queda?`,det:`buzo ${fc(h)} sube ${s}`,opciones:o.opciones,resp:o.resp,k:'n5c'+h+s,
+      pista:`Subir es sumar: ${fc(h)} + ${s} = ${fc(r)} metros.`};}
+  const a=R(-12,-1),b=R(-12,-1);if(a===b)return {bad:1,k:'n'+Math.random()};
+  const fria=R(0,1),r=fria?Math.min(a,b):Math.max(a,b);
+  return {vis:RC([],{min:-12,max:12}),q:`Hoy hay ${fc(a)} °C en la ciudad A y ${fc(b)} °C en la ciudad B. ¿Cuál ciudad está ${fria?'más fría':'menos fría'}?`,det:`A ${fc(a)}, B ${fc(b)}, ${fria?'más fría':'menos fría'}`,opciones:['Ciudad A','Ciudad B'],resp:r===a?0:1,k:'n5d'+a+b+fria,
+    pista:`Entre números negativos, el que está más lejos del 0 es el menor, o sea el más frío. ${fc(Math.min(a,b))} es menor que ${fc(Math.max(a,b))}.`};});}
+const NEG=[{id:'neg-1',grupo:'negativos',titulo:'Números negativos',icono:'−5',niveles:[
+  {n:1,nombre:'Leer y ubicar en la recta',recuerda:'Los números negativos están a la izquierda del 0 y llevan el signo −. Mientras más a la izquierda, más pequeño es el número. El 0 no es positivo ni negativo.',gen:nN1()},
+  {n:2,nombre:'Comparar',recuerda:'El número que está más a la derecha en la recta es el mayor. Todo positivo es mayor que cualquier negativo. Entre negativos, el que está más cerca del 0 es el mayor: −2 es mayor que −8.',gen:nN2()},
+  {n:3,nombre:'Ordenar',recuerda:'De menor a mayor se ordena de izquierda a derecha en la recta. Ejemplo: −7 < −3 < 0 < 4. Ojo: −7 es menor que −3 aunque el 7 sea más grande.',gen:nN3()},
+  {n:4,nombre:'Sumas y restas con la recta',recuerda:'Sumar es moverse a la derecha y restar es moverse a la izquierda. Ejemplo: −2 − 5 → empiezas en −2 y das 5 pasos a la izquierda: −7. Y −4 + 6: 6 pasos a la derecha, cruzas el cero: 2.',gen:nN4()},
+  {n:5,nombre:'Problemas con negativos',recuerda:'Temperaturas bajo cero, sótanos y profundidad bajo el mar son números negativos. Subir, sumar; bajar, restar. Dibuja la recta y da los pasos.',gen:nN5()}]}];
+
 OPS.forEach(m=>m.grupo='operaciones');
-window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI,...COORD,...FUN];
+window.MODULOS=[...TABLAS,...OPS,...DECS,...MEDS,...POLI,...COORD,...FUN,...NEG];
 window.R=R;window.fmtNum=fmt;
 })();

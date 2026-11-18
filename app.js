@@ -140,6 +140,8 @@ function vHome(){
   <div class="grid g-mod">${meds.map(tarjetaMod).join('')}</div>
   <h2>Geometría</h2>
   <div class="grid g-mod">${geo.map(tarjetaMod).join('')}</div>
+  <h2>Números negativos</h2>
+  <div class="grid g-mod">${window.MODULOS.filter(m=>m.grupo==='negativos').map(tarjetaMod).join('')}</div>
   <h2>Funciones</h2>
   <div class="grid g-mod">${window.MODULOS.filter(m=>m.grupo==='funciones').map(tarjetaMod).join('')}</div>
   <h2>Herramientas</h2>
@@ -174,6 +176,7 @@ function vis(p){
   const v=p.vis;
   if(v.tipo==='col'){const a=String(v.a),b=String(v.b);return `<div class="col"><div class="r"><span>${a}</span></div><div class="r"><span class="op">${v.op}</span><span>${b}</span></div><div class="raya"></div></div>`;}
   if(v.tipo==='poli')return window.svgPoli(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
+  if(v.tipo==='recta')return window.svgRecta(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='tabla')return `<div class="fmaq"><span>Entrada</span><b>⚙️ Regla: ${esc(v.regla)}</b><span>Salida</span></div><table class="ftab"><tr><th>Entrada</th>${v.ent.map(x=>`<td class="${x==='?'?'int':''}">${x}</td>`).join('')}</tr><tr><th>Salida</th>${v.sal.map(x=>`<td class="${x==='?'?'int':''}">${x}</td>`).join('')}</tr></table><div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='plano')return window.svgPlano(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
   if(v.tipo==='poli3')return window.svgPoli3(v)+`<div class="q-linea q-peq">${esc(p.q)}</div>`;
